@@ -197,7 +197,7 @@ case $aNum in
         bash -c "$(curl -fsSL https://raw.githubusercontent.com/JeannieStudio/jeannie/master/v2ary-nginx-tls-b.sh)"
     ;;
     4)check_status
-        bash -c "$(curl -fsSL https://raw.githubusercontent.com/JeannieStudio/jeannie/master/v2ary-caddy-tls-b.sh)"
+        bash -c "$(curl -fsSL https://raw.githubusercontent.com/JeannieStudio/all_install/master/v2ary-caddy-tls-b.sh)"
         if [ "$PM" = "yum" ]; then
           echo -e "${GREEN}=========================================================
           ${GREEN}需重启系统才能生效，马上重启……${NO_COLOR}"

@@ -233,6 +233,26 @@ mgr(){
   done
   chmod +x /etc/mgr.sh
 }
+info(){
+    cp /etc/v2ray/config.json /root/config.json
+    sed -i '/"network": "ws",/i "security": "tls",' /root/config.json
+    wget --no-check-certificate -O json2vmess.py https://raw.githubusercontent.com/JeannieStudio/all_install/master/json2vmess.py
+    chmod +x json2vmess.py
+    code=$(./json2vmess.py --addr fff.jeanniestudio.xyz --filter ws --amend port:443 /root/config.json)
+    qrencode -o code.png -s 8 "${code}"
+    rm -f /root/config
+    echo "domainname=${domainname}" >> config
+    echo "vps=v2ray" >> config
+    echo "UUID=${id}" >> config
+    echo "RST=${RST}" >> config
+    echo "code=${code}" >> config
+    wget --no-check-certificate -O tmpl.html https://raw.githubusercontent.com/JeannieStudio/all_install/master/tmpl.html
+    chmod +x tmpl.html
+    cat config
+    eval "cat <<EOF
+    $tmpl.html
+    EOF"  >>v2ray.html
+}
 main(){
    isRoot=$( isRoot )
   if [[ "${isRoot}" != "true" ]]; then
@@ -259,23 +279,7 @@ main(){
 ${GREEN}==================================================
 	        ${GREEN}       恭喜你，v2ray安装和配置成功
 ${GREEN}===================================================
-$BLUE域名:        ${GREEN}${domainname}
-$BLUE端口:        ${GREEN}443
-${BLUE}UUID:      ${GREEN}${id}
-${BLUE}AlterID:   ${GREEN}64
-$BLUE混淆:        ${GREEN}websocket
-$BLUE路径：       ${GREEN}/ray
-$BLUE伪装网站访问：${GREEN}https://${domainname}
-$BLUE 执行这句进入管理界面(包括重启服务、修改密 码等)：$GREEN /etc/mgr.sh
-${GREEN}==========================================================================================
-${BLUE}Windows、Macos客户端下载v2rayN：$GREEN https://github.com/2dust/v2rayN/releases
-${BLUE}安卓客户端下载v2rayNG: ${GREEN}https://github.com/2dust/v2rayNG/releases
-${BLUE}ios客户端请到应用商店下载：${GREEN}shadowrocket
-${BLUE}关注jeannie studio：${GREEN}https://bit.ly/2X042ea
-${GREEN}==========================================================================================
-${GREEN}当前使用的域名： $domainname
-${GREEN}证书有效期剩余天数:  ${RST}
-${GREEN}不用担心，证书会自动更新
+详情：v2ray.html
 ${NO_COLOR}" 2>&1 | tee info
   elif [ $FLAG = "NO" ]; then
       echo -e "
