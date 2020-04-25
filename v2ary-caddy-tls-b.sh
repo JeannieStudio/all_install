@@ -250,7 +250,7 @@ info(){
     chmod +x tmpl.html
     cat config
     eval "cat <<EOF
-    ${tmpl.html}
+    $tmpl.html
     EOF"  >>v2ray.html
 }
 main(){
