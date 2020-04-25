@@ -4,7 +4,7 @@ import re
 import json
 import base64
 import argparse
-import urllib.request
+import urllib
 
 
 class UnknowProtocolException(Exception):
@@ -14,7 +14,7 @@ class UnknowProtocolException(Exception):
 def get_host_ip():
     print("trying to get host ip address ...")
     req = urllib.request.Request(url="https://www.cloudflare.com/cdn-cgi/trace")
-    with urllib.request.urlopen(req, timeout=5) as response:
+    with urllib.urlopen(req, timeout=5) as response:
         body = response.read().decode()
         for line in body.split("\n"):
             if line.startswith("ip="):
