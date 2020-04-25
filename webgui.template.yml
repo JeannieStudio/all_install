@@ -1,0 +1,62 @@
+type: m
+
+manager:
+  address: ${IP}:4001
+  password: '${password}'
+  # 这部分的端口和密码需要跟上一步 manager 参数里的保持一致，以连接 type s 部分监听的 tcp 端口
+plugins:
+  flowSaver:
+    use: true
+  user:
+    use: true
+  account:
+    use: true
+  macAccount:
+    use: true
+  group:
+    use: true
+  email:
+    use: true
+    type: 'smtp'
+    username: '${email_username}'
+    password: '${email_password}'
+    host: 'smtp.zoho.com'
+    # 这部分的邮箱和密码是用于发送注册验证邮件，重置密码邮件
+  webgui:
+    use: true
+    host: '0.0.0.0'
+    port: '8080'
+    site: 'http://${IP}'
+    # cdn: 'http://xxx.com' # 静态资源cdn地址，可省略
+    #icon: 'icon.jpg' # 自定义首页图标，默认路径在 ~/.ssmgr 可省略
+    # skin: 'default' # 首页皮肤，可省略
+    # googleAnalytics: 'UA-xxxxxxxx-x' # Google Analytics ID，可省略
+    gcmSenderId: '456102641793'
+    gcmAPIKey: 'AAAAGzzdqrE:XXXXXXXXXXXXXX'
+  webgui_telegram:
+    use: false
+    token: 'xxxxxxxx'
+
+  alipay:
+    # 如果不使用支付宝，这段可以去掉
+    use: true
+    appid: ${alipay_appid}
+    notifyUrl: 'http://${IP}/api/user/alipay/callback'
+    merchantPrivateKey: '${alipay_private_key}'
+    alipayPublicKey: '${alipay_public_key}'
+    gatewayUrl: 'https://openapi.alipay.com/gateway.do'
+  paypal:
+    # 如果不使用paypal，这段可以去掉
+    use: false
+    mode: 'live' # sandbox or live
+    client_id: 'At9xcGd1t5L6OrICKNnp2g9'
+    client_secret: 'EP40s6pQAZmqp_G_nrU9kKY4XaZph'
+
+db: 'webgui.sqlite'
+
+# 从 0.30 开始需要配置 redis
+redis:
+  host: '127.0.0.1'
+  port: 6379
+  password:
+  db: 0

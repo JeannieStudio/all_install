@@ -1,0 +1,10 @@
+type: s
+
+shadowsocks:
+  address: 127.0.0.1:4000
+  # 这里的地址和端口需要跟上一步的 --manager-address 参数保持一致，连接上述 udp 端口
+manager:
+  address: 0.0.0.0:4001
+  #这个 address 参数会让程序监听一个 tcp 端口，用于接收 webgui 发送过来的控制命令
+  password: '${password}'
+db: 'ss.sqlite'
