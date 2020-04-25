@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/python
 # -*- coding:utf-8 -*-
 #@Time  : 2020/4/25 23:19
 #@Author: Jeannie
