@@ -1,8 +1,4 @@
 #!/usr/bin/python
-# -*- coding:utf-8 -*-
-#@Time  : 2020/4/25 23:19
-#@Author: Jeannie
-#@File  : json2vmess.py
 import sys
 import re
 import json
