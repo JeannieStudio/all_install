@@ -250,7 +250,7 @@ info(){
     chmod +x tmpl.html
     cat config
     eval "cat <<EOF
-    $tmpl.html
+    ${tmpl.html}
     EOF"  >>v2ray.html
 }
 main(){
@@ -274,6 +274,7 @@ main(){
   check_CA
   add_CA
   mgr
+  info
   if [ $FLAG = "YES" ]; then
       echo -e "
 ${GREEN}==================================================
