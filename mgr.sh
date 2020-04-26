@@ -153,7 +153,6 @@ mgr(){
                     genId
                     read -p  "uuid:$id，满意吗？（不满意输入y,按其他键表示接受）" answer
                 done
-                service v2ray stop
                 rm -f /var/www/${id}.html
                 rm -f /var/www/$id.png
                 rm -f config.json
@@ -161,19 +160,22 @@ mgr(){
                 sed -i "s/"b831381d-6324-4d53-ad4f-8cda48b30811"/$id/g" config.json
                 \cp -rf config.json /etc/v2ray/config.json
                 sed -i "/<li>UUID/c <li>UUID:$id" /var/www/${id}.html
-                sed -i '/"network": "ws",/i "security": "tls",' /root/config.json
+                sed -i '/"network": "ws",/i "security": "tls",' config.json
                 wget --no-check-certificate -O json2vmess.py https://raw.githubusercontent.com/JeannieStudio/all_install/master/json2vmess.py
                 chmod +x json2vmess.py
+                domainname=`cat /etc/v2ray/domainname`
                 code=$(./json2vmess.py --addr fff.jeanniestudio.xyz --filter ws --amend port:443 /root/config.json)
                 qrencode -o /var/www/$id.png -s 8 "${code}"
                 sed -i "/<li><code>/c <li><code>${code}</code></li>" /var/www/$id.html
                 sed -i "/<li ><img/c <li ><img src="${id}.png" /></li>" /var/www/${id}.html
                 sed -i "/详情：https:/c 详情：https://${domainname}/${shadowsockspwd}.html " /etc/motd
+                service v2ray stop
+                service v2ray start
                 echo -e  "${GREEN}恭喜你，UUID修改成功,详情：https://${domainname}/${id}.html ${NO_COLOR}"
             else
                 echo -e  "${RED}很遗憾，v2ray配置文件不存在${NO_COLOR}"
             fi
-            service v2ray start
+
           ;;
           4)caddy -service stop
             echo -e  "${GREEN}caddy服务停止${NO_COLOR}"
@@ -217,7 +219,6 @@ mgr(){
                     genId
                     read -p  "uuid:$id，满意吗？（不满意输入y,按其他键表示接受）" answer
                 done
-                service v2ray stop
                 rm -f /var/www/${id}.html
                 rm -f /var/www/$id.png
                 rm -f config.json
@@ -225,19 +226,21 @@ mgr(){
                 sed -i "s/"b831381d-6324-4d53-ad4f-8cda48b30811"/$id/g" config.json
                 \cp -rf config.json /etc/v2ray/config.json
                 sed -i "/<li>UUID/c <li>UUID:$id" /var/www/${id}.html
-                sed -i '/"network": "ws",/i "security": "tls",' /root/config.json
+                sed -i '/"network": "ws",/i "security": "tls",' config.json
                 wget --no-check-certificate -O json2vmess.py https://raw.githubusercontent.com/JeannieStudio/all_install/master/json2vmess.py
                 chmod +x json2vmess.py
-                code=$(./json2vmess.py --addr fff.jeanniestudio.xyz --filter ws --amend port:443 /root/config.json)
+                domainname=`cat /etc/v2ray/domainname`
+                code=$(./json2vmess.py --addr ${domainname} --filter ws --amend port:443 /root/config.json)
                 qrencode -o /var/www/$id.png -s 8 "${code}"
                 sed -i "/<li><code>/c <li><code>${code}</code></li>" /var/www/$id.html
                 sed -i "/<li ><img/c <li ><img src="${id}.png" /></li>" /var/www/${id}.html
                 sed -i "/详情：https:/c 详情：https://${domainname}/${shadowsockspwd}.html " /etc/motd
+                service v2ray stop
+                service v2ray start
                 echo -e  "${GREEN}恭喜你，UUID修改成功,详情：https://${domainname}/${id}.html ${NO_COLOR}"
             else
                 echo -e  "${RED}很遗憾，v2ray配置文件不存在${NO_COLOR}"
             fi
-            service v2ray start
           ;;
           4)nginx -s stop
             echo -e  "${GREEN}nginx服务停止${NO_COLOR}"
@@ -275,9 +278,7 @@ mgr(){
           3)rm -f /var/www/${shadowsockspwd}.html
             rm -f /var/www/${shadowsockspwd}.png
             read -p "请输入您要修改的密码：" shadowsockspwd
-            /etc/init.d/shadowsocks-r stop
             sed -i "7c \"password\":\"$shadowsockspwd\"," /etc/shadowsocks-r/config.json
-            /etc/init.d/shadowsocks-r start
             sed -i "/<li>密码/c <li>密码:${shadowsockspwd}" /var/www/${shadowsockspwd}.html
             shadowsockprotocol=`sed -n "2p" /etc/shadowsocks-r/ssr_info`
             shadowsockscipher=`sed -n "3p" /etc/shadowsocks-r/ssr_info`
@@ -289,6 +290,8 @@ mgr(){
             sed -i "/<li><code>/c <li><code>${code}</code></li>" /var/www/${shadowsockspwd}.html
             sed -i "/<li ><img/c <li ><img src="${shadowsockspwd}.png" /></li>" /var/www/${shadowsockspwd}.html
             sed -i "/详情：https:/c 详情：https://${domainname}/${shadowsockspwd}.html " /etc/motd
+            /etc/init.d/shadowsocks-r stop
+            /etc/init.d/shadowsocks-r start
             echo -e  "${GREEN}恭喜你，密码修改成功,详情：https://${domainname}/${shadowsockspwd}.html ${NO_COLOR}"
           ;;
           4)caddy -service stop
