@@ -1092,11 +1092,11 @@ qr_generate_python(){
 
 qr_generate_r(){
     if [ "$(command -v qrencode)" ]; then
-        rm -f /root/ssr_info
-        echo "${shadowsockspwd}" >> /root/ssr_info
-        echo "${shadowsockprotocol}" >> /root/ssr_info
-        echo "${shadowsockscipher}" >> /root/ssr_info
-        echo "${shadowsockobfs}" >> /root/ssr_info
+        rm -f /etc/shadowsocks-r/ssr_info
+        echo "${shadowsockspwd}" >> /etc/shadowsocks-r/ssr_info
+        echo "${shadowsockprotocol}" >> /etc/shadowsocks-r/ssr_info
+        echo "${shadowsockscipher}" >> /etc/shadowsocks-r/ssr_info
+        echo "${shadowsockobfs}" >> /etc/shadowsocks-r/ssr_info
         local tmp1=$(echo -n "${shadowsockspwd}" | base64 -w0 | sed 's/=//g;s/\//_/g;s/+/-/g')
         local tmp2=$(echo -n "$(get_ip):${shadowsocksport}:${shadowsockprotocol}:${shadowsockscipher}:${shadowsockobfs}:${tmp1}/?obfsparam=" | base64 -w0)
         local qr_code="ssr://${tmp2}"

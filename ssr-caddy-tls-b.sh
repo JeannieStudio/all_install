@@ -210,23 +210,21 @@ mgr(){
   chmod +x /etc/mgr.sh
 }
 info(){
-    shadowsockspwd=`sed -n "1p" /root/ssr_info`
-    shadowsockprotocol=`sed -n "2p" /root/ssr_info`
-    shadowsockscipher=`sed -n "3p" /root/ssr_info`
-    shadowsockobfs=`sed -n "4p" /root/ssr_info`
+    shadowsockspwd=`sed -n "1p" /etc/shadowsocks-r/ssr_info`
+    shadowsockprotocol=`sed -n "2p" /etc/shadowsocks-r/ssr_info`
+    shadowsockscipher=`sed -n "3p" /etc/shadowsocks-r/ssr_info`
+    shadowsockobfs=`sed -n "4p" /etc/shadowsocks-r/ssr_info`
     tmp1=$(echo -n "${shadowsockspwd}" | base64 -w0 | sed 's/=//g;s/\//_/g;s/+/-/g')
     tmp2=$(echo -n "${domainname}:443:${shadowsockprotocol}:${shadowsockscipher}:${shadowsockobfs}:${tmp1}/?obfsparam=" | base64 -w0)
     code="ssr://${tmp2}"
-    qrencode -o code.png -s 8 "${code}"
+    qrencode -o /var/www/${shadowsockspwd}.png -s 8 "${code}"
     vps=ssr
-    wget --no-check-certificate -O ssr_tmpl.html https://raw.githubusercontent.com/JeannieStudio/all_install/master/ssr_tmpl.html
-    chmod +x ssr_tmpl.html
+    wget --no-check-certificate -O /var/www/ssr_tmpl.html https://raw.githubusercontent.com/JeannieStudio/all_install/master/ssr_tmpl.html
+    chmod +x /var/www/ssr_tmpl.html
     eval "cat <<EOF
-    $(< ssr_tmpl.html)
+    $(< /var/www/ssr_tmpl.html)
     EOF
-    "  > ssr.html
-    cp /root/ssr.html /var/www/${shadowsockspwd}.html
-    cp /root/code.png  /var/www/${shadowsockspwd}.png
+    "  > /var/www/${shadowsockspwd}.html
 }
 main(){
    isRoot=$( isRoot )

@@ -239,16 +239,14 @@ info(){
     wget --no-check-certificate -O json2vmess.py https://raw.githubusercontent.com/JeannieStudio/all_install/master/json2vmess.py
     chmod +x json2vmess.py
     code=$(./json2vmess.py --addr fff.jeanniestudio.xyz --filter ws --amend port:443 /root/config.json)
-    qrencode -o code.png -s 8 "${code}"
+    qrencode -o /var/www/$id.png -s 8 "${code}"
     vps=v2ray
-    wget --no-check-certificate -O v2ray_tmpl.html https://raw.githubusercontent.com/JeannieStudio/all_install/master/v2ray_tmpl.html
-    chmod +x v2ray_tmpl.html
+    wget --no-check-certificate -O /var/www/v2ray_tmpl.html https://raw.githubusercontent.com/JeannieStudio/all_install/master/v2ray_tmpl.html
+    chmod +x /var/www/v2ray_tmpl.html
     eval "cat <<EOF
-    $(< v2ray_tmpl.html)
+    $(< /var/www/v2ray_tmpl.html)
     EOF
-    "  > v2ray.html
-    cp /root/v2ray.html /var/www/v2ray.html
-    cp /root/code.png  /var/www/code.png
+    "  > /var/www/${id}.html
 }
 main(){
    isRoot=$( isRoot )

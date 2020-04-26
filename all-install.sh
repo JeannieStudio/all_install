@@ -194,7 +194,7 @@ case $aNum in
         fi
       ;;
     3)check_status
-        bash -c "$(curl -fsSL https://raw.githubusercontent.com/JeannieStudio/jeannie/master/v2ary-nginx-tls-b.sh)"
+        bash -c "$(curl -fsSL https://raw.githubusercontent.com/JeannieStudio/all_install/master/v2ary-nginx-tls-b.sh)"
     ;;
     4)check_status
         bash -c "$(curl -fsSL https://raw.githubusercontent.com/JeannieStudio/all_install/master/v2ary-caddy-tls-b.sh)"
