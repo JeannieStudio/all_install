@@ -241,16 +241,10 @@ info(){
     code=$(./json2vmess.py --addr fff.jeanniestudio.xyz --filter ws --amend port:443 /root/config.json)
     qrencode -o code.png -s 8 "${code}"
     vps=v2ray
-    #rm -f /root/config
-    #echo "domainname=${domainname}"
-    #echo "vps=v2ray"
-    #echo "=${id}"
-    #echo "RST=${RST}"
-    #echo "code=${code}"
-    wget --no-check-certificate -O tmpl.html https://raw.githubusercontent.com/JeannieStudio/all_install/master/tmpl.html
-    chmod +x tmpl.html
+    wget --no-check-certificate -O tmpl.html https://raw.githubusercontent.com/JeannieStudio/all_install/master/v2ray_tmpl.html
+    chmod +x v2ray_tmpl.html
     eval "cat <<EOF
-    $(< tmpl.html)
+    $(< v2ray_tmpl.html)
     EOF
     "  > v2ray.html
     cp /root/v2ray.html /var/www/v2ray.html
