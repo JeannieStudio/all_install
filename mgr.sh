@@ -173,7 +173,7 @@ mgr(){
                 "  > /var/www/${id}.html
                 sed -i "/<li><code>/c <li><code>${code}</code></li>" /var/www/$id.html
                 sed -i "/<li ><img/c <li ><img src="${id}.png" /></li>" /var/www/${id}.html
-                sed -i "/详情：https:/c 详情：https://${domainname}/${shadowsockspwd}.html " /etc/motd
+                sed -i "/详情：https:/c 详情：https://${domainname}/${id}.html " /etc/motd
                 service v2ray stop
                 service v2ray start
                 echo "${id}" > /etc/v2ray/id
@@ -244,7 +244,7 @@ mgr(){
                 "  > /var/www/${id}.html
                 sed -i "/<li><code>/c <li><code>${code}</code></li>" /var/www/$id.html
                 sed -i "/<li ><img/c <li ><img src="${id}.png" /></li>" /var/www/${id}.html
-                sed -i "/详情：https:/c 详情：https://${domainname}/${shadowsockspwd}.html " /etc/motd
+                sed -i "/详情：https:/c 详情：https://${domainname}/${id}.html " /etc/motd
                 service v2ray stop
                 service v2ray start
                 echo "${id}" > /etc/v2ray/id
