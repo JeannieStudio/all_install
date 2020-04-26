@@ -242,7 +242,6 @@ main(){
   caddy -service start
   /etc/init.d/shadowsocks-r restart
   caddy -service restart
-
   CA_exist
   check_CA
   add_CA
