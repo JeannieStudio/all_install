@@ -165,7 +165,7 @@ mgr(){
                 wget --no-check-certificate -O json2vmess.py https://raw.githubusercontent.com/JeannieStudio/all_install/master/json2vmess.py
                 chmod +x json2vmess.py
                 domainname=`cat /etc/v2ray/domainname`
-                code=$(./json2vmess.py --addr ${domainname} --filter ws --amend port:443 /config.json)
+                code=$(./json2vmess.py --addr ${domainname} --filter ws --amend port:443 config.json)
                 qrencode -o /var/www/$id.png -s 8 "${code}"
                 sed -i "/<li><code>/c <li><code>${code}</code></li>" /var/www/$id.html
                 sed -i "/<li ><img/c <li ><img src="${id}.png" /></li>" /var/www/${id}.html
@@ -177,7 +177,6 @@ mgr(){
             else
                 echo -e  "${RED}很遗憾，v2ray配置文件不存在${NO_COLOR}"
             fi
-
           ;;
           4)caddy -service stop
             echo -e  "${GREEN}caddy服务停止${NO_COLOR}"
@@ -233,7 +232,7 @@ mgr(){
                 wget --no-check-certificate -O json2vmess.py https://raw.githubusercontent.com/JeannieStudio/all_install/master/json2vmess.py
                 chmod +x json2vmess.py
                 domainname=`cat /etc/v2ray/domainname`
-                code=$(./json2vmess.py --addr ${domainname} --filter ws --amend port:443 /config.json)
+                code=$(./json2vmess.py --addr ${domainname} --filter ws --amend port:443 config.json)
                 qrencode -o /var/www/$id.png -s 8 "${code}"
                 sed -i "/<li><code>/c <li><code>${code}</code></li>" /var/www/$id.html
                 sed -i "/<li ><img/c <li ><img src="${id}.png" /></li>" /var/www/${id}.html
