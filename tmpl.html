@@ -175,6 +175,7 @@ footer a:link {
 ::-webkit-scrollbar-thumb:hover {
     background: #156;
 }
+code {display: block;overflow: auto;background: #f4f4f4;padding: 5px 10px;border: 1px solid #eee;word-wrap:break-word; / Internet Explorer 5.5+ / white-space: pre-wrap; / Firefox /}
 </style>
 <body>
     <div>
@@ -191,7 +192,9 @@ footer a:link {
                                 <li>域名:${domainname} </li>
 								<li>端口:443</li>
                                 <script>
-                                    switch (${vps}) {
+                                    dom;
+                                    function dom(){
+                                        switch (${vps}) {
                                         case "v2ray":
                                             <li>UUID:${id}</li>
                                             <li>AlterID:64</li>
@@ -220,6 +223,8 @@ footer a:link {
 								     <li>协议:${Protocol##*:}</li>
 								     <li>混淆:${obfs##*:}</li>
 								</if>
+                                    }
+
 								<li>伪装网站请访问：https://${domainname} </li>
 								<li>执行这句进入管理界面(包括重启服务、修改密 码等)：/etc/mgr.sh</li>
                                 </script>
@@ -228,7 +233,8 @@ footer a:link {
                         <li>
                             <h3>分享链接</h3>
                             <ul>
-                                <li><code>${code}</code></li>
+                                <li><code>vmess://eyJhZGQiOiAiZmZmLmplYW5uaWVzdHVkaW8ueHl6IiwgImFpZCI6ICI2NCIsICJob3N0IjogIiIsICJpZCI6ICIyODQ5NzZkZC0xZWIyLTIyZjktZmQyNC1iOWExYTg3N2U0ODMiLCAibmV0IjogIndzIiwgInBhdGgiOiAiL3JheSIsICJwb3J0IjogIjQ0MyIsICJwcyI6ICJmZmYuamVhbm5pZXN0dWRpby54eXovd3MiLCAidGxzIjogInRscyIsICJ0eXBlIjogIm5vbmUiLCAidiI6ICIyIn0=</code></li>
+
                             </ul>
                         </li>
                         <li>
