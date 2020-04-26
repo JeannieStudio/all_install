@@ -258,7 +258,7 @@ main(){
 ${GREEN} ===================================================
 ${GREEN}       恭喜你，SSR安装和配置成功
 ${GREEN} ===================================================
-详情：https://${domainname}/ssr.html
+详情：https://${domainname}/${shadowsockspwd}.html
  $NO_COLOR " 2>&1 | tee info
     elif [ $FLAG = "NO" ]; then
       echo -e "
