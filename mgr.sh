@@ -168,7 +168,8 @@ mgr(){
                 qrencode -o /var/www/$id.png -s 8 "${code}"
                 sed -i "/<li><code>/c <li><code>${code}</code></li>" /var/www/$id.html
                 sed -i "/<li ><img/c <li ><img src="${id}.png" /></li>" /var/www/${id}.html
-                echo -e  "${GREEN}恭喜你，UUID修改成功${NO_COLOR}"
+                sed -i "/详情：https:/c 详情：https://${domainname}/${shadowsockspwd}.html " /etc/motd
+                echo -e  "${GREEN}恭喜你，UUID修改成功,详情：https://${domainname}/${id}.html ${NO_COLOR}"
             else
                 echo -e  "${RED}很遗憾，v2ray配置文件不存在${NO_COLOR}"
             fi
@@ -231,7 +232,8 @@ mgr(){
                 qrencode -o /var/www/$id.png -s 8 "${code}"
                 sed -i "/<li><code>/c <li><code>${code}</code></li>" /var/www/$id.html
                 sed -i "/<li ><img/c <li ><img src="${id}.png" /></li>" /var/www/${id}.html
-                echo -e  "${GREEN}恭喜你，UUID修改成功${NO_COLOR}"
+                sed -i "/详情：https:/c 详情：https://${domainname}/${shadowsockspwd}.html " /etc/motd
+                echo -e  "${GREEN}恭喜你，UUID修改成功,详情：https://${domainname}/${id}.html ${NO_COLOR}"
             else
                 echo -e  "${RED}很遗憾，v2ray配置文件不存在${NO_COLOR}"
             fi
@@ -286,7 +288,8 @@ mgr(){
             qrencode -o /var/www/${shadowsockspwd}.png -s 8 "${code}"
             sed -i "/<li><code>/c <li><code>${code}</code></li>" /var/www/${shadowsockspwd}.html
             sed -i "/<li ><img/c <li ><img src="${shadowsockspwd}.png" /></li>" /var/www/${shadowsockspwd}.html
-            echo -e  "${GREEN}恭喜你，密码修改成功${NO_COLOR}"
+            sed -i "/详情：https:/c 详情：https://${domainname}/${shadowsockspwd}.html " /etc/motd
+            echo -e  "${GREEN}恭喜你，密码修改成功,详情：https://${domainname}/${shadowsockspwd}.html ${NO_COLOR}"
           ;;
           4)caddy -service stop
             echo -e  "${GREEN}caddy服务停止${NO_COLOR}"
