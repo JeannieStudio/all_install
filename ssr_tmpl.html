@@ -190,10 +190,10 @@ code {display: block;overflow: auto;background: #f4f4f4;padding: 5px 10px;border
                             <ul>
                                 <li>域名:${domainname} </li>
 								<li>端口:443</li>
-                                <li>密码:${password}</li>
-                                <li>加密方式:${method##*:}</li>
-                                <li>协议:${Protocol##*:}</li>
-                                <li>混淆:${obfs##*:}</li>
+                                <li>密码:${shadowsockspwd}</li>
+                                <li>加密方式:${shadowsockscipher}</li>
+                                <li>协议:${shadowsockprotocol}</li>
+                                <li>混淆:${shadowsockobfs}</li>
                                 <li>伪装网站请访问：https://${domainname} </li>
 								<li>执行这句进入管理界面(包括重启服务、修改密 码等)：/etc/mgr.sh</li>
                             </ul>

@@ -160,6 +160,13 @@ mgr(){
                 \cp -rf config.json /etc/v2ray/config.json
                 echo -e  "${GREEN}恭喜你，UUID修改成功${NO_COLOR}"
                 sed -i "/<li>UUID/c <li>UUID:$id" /var/www/v2ray.html
+                sed -i '/"network": "ws",/i "security": "tls",' /root/config.json
+                wget --no-check-certificate -O json2vmess.py https://raw.githubusercontent.com/JeannieStudio/all_install/master/json2vmess.py
+                chmod +x json2vmess.py
+                code=$(./json2vmess.py --addr fff.jeanniestudio.xyz --filter ws --amend port:443 /root/config.json)
+                qrencode -o code.png -s 8 "${code}"
+                sed -i "/<li><code>/c <li><code>${code}</code></li>" /var/www/v2ray.html
+                cp /root/code.png  /var/www/code.png
             else
                 echo -e  "${RED}很遗憾，v2ray配置文件不存在${NO_COLOR}"
             fi
@@ -214,6 +221,13 @@ mgr(){
                 \cp -rf config.json /etc/v2ray/config.json
                 echo -e  "${GREEN}恭喜你，UUID修改成功${NO_COLOR}"
                 sed -i "/<li>UUID/c <li>UUID:$id" /var/www/v2ray.html
+                sed -i '/"network": "ws",/i "security": "tls",' /root/config.json
+                wget --no-check-certificate -O json2vmess.py https://raw.githubusercontent.com/JeannieStudio/all_install/master/json2vmess.py
+                chmod +x json2vmess.py
+                code=$(./json2vmess.py --addr fff.jeanniestudio.xyz --filter ws --amend port:443 /root/config.json)
+                qrencode -o code.png -s 8 "${code}"
+                sed -i "/<li><code>/c <li><code>${code}</code></li>" /var/www/v2ray.html
+                cp /root/code.png  /var/www/code.png
             else
                 echo -e  "${RED}很遗憾，v2ray配置文件不存在${NO_COLOR}"
             fi

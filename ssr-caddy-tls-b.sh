@@ -210,11 +210,9 @@ mgr(){
   chmod +x /etc/mgr.sh
 }
 info(){
-    cp /etc/v2ray/config.json /root/config.json
-    sed -i '/"network": "ws",/i "security": "tls",' /root/config.json
-    wget --no-check-certificate -O json2vmess.py https://raw.githubusercontent.com/JeannieStudio/all_install/master/json2vmess.py
-    chmod +x json2vmess.py
-    code=$(./json2vmess.py --addr fff.jeanniestudio.xyz --filter ws --amend port:443 /root/config.json)
+    tmp1=$(echo -n "${shadowsockspwd}" | base64 -w0 | sed 's/=//g;s/\//_/g;s/+/-/g')
+    tmp2=$(echo -n "$(get_ip):${shadowsocksport}:${shadowsockprotocol}:${shadowsockscipher}:${shadowsockobfs}:${tmp1}/?obfsparam=" | base64 -w0)
+    code="ssr://${tmp2}"
     qrencode -o code.png -s 8 "${code}"
     vps=ssr
     wget --no-check-certificate -O ssr_tmpl.html https://raw.githubusercontent.com/JeannieStudio/all_install/master/ssr_tmpl.html
@@ -244,10 +242,7 @@ main(){
   caddy -service start
   /etc/init.d/shadowsocks-r restart
   caddy -service restart
-  pwd=$(sed -n '7p' /etc/shadowsocks-r/config.json)
-    method=$(sed -n '9p' /etc/shadowsocks-r/config.json)
-  Protocol=$(sed -n '10p' /etc/shadowsocks-r/config.json)
-  obfs=$(sed -n '12p' /etc/shadowsocks-r/config.json)
+
   CA_exist
   check_CA
   add_CA
