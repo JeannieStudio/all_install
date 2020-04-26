@@ -284,20 +284,23 @@ mgr(){
           2)/etc/init.d/shadowsocks-r restart
             echo -e  "${GREEN}ssr服务启动${NO_COLOR}"
           ;;
-          3)rm -f /var/www/${shadowsockspwd}.html
-            rm -f /var/www/${shadowsockspwd}.png
-            read -p "请输入您要修改的密码：" shadowsockspwd
-            sed -i "7c \"password\":\"$shadowsockspwd\"," /etc/shadowsocks-r/config.json
-            sed -i "/<li>密码/c <li>密码:${shadowsockspwd}" /var/www/${shadowsockspwd}.html
+          3)shadowsockspwd=`sed -n "1p" /etc/shadowsocks-r/ssr_info`
             shadowsockprotocol=`sed -n "2p" /etc/shadowsocks-r/ssr_info`
             shadowsockscipher=`sed -n "3p" /etc/shadowsocks-r/ssr_info`
             shadowsockobfs=`sed -n "4p" /etc/shadowsocks-r/ssr_info`
+            rm -f /var/www/${shadowsockspwd}.html
+            rm -f /var/www/${shadowsockspwd}.png
+            read -p "请输入您要修改的密码：" shadowsockspwd
+            sed -i "7c \"password\":\"$shadowsockspwd\"," /etc/shadowsocks-r/config.json
             tmp1=$(echo -n "${shadowsockspwd}" | base64 -w0 | sed 's/=//g;s/\//_/g;s/+/-/g')
             tmp2=$(echo -n "${domainname}:443:${shadowsockprotocol}:${shadowsockscipher}:${shadowsockobfs}:${tmp1}/?obfsparam=" | base64 -w0)
             code="ssr://${tmp2}"
             qrencode -o /var/www/${shadowsockspwd}.png -s 8 "${code}"
-            sed -i "/<li><code>/c <li><code>${code}</code></li>" /var/www/${shadowsockspwd}.html
-            sed -i "/<li ><img/c <li ><img src="${shadowsockspwd}.png" /></li>" /var/www/${shadowsockspwd}.html
+            eval "cat <<EOF
+            $(< /var/www/ssr_tmpl.html)
+            EOF
+            "  > /var/www/${shadowsockspwd}.html
+            sed -i "1c ${shadowsockspwd}" /etc/shadowsocks-r/ssr_info
             sed -i "/详情：https:/c 详情：https://${domainname}/${shadowsockspwd}.html " /etc/motd
             /etc/init.d/shadowsocks-r stop
             /etc/init.d/shadowsocks-r start
