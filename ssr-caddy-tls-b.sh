@@ -211,7 +211,7 @@ mgr(){
 }
 info(){
     tmp1=$(echo -n "${shadowsockspwd}" | base64 -w0 | sed 's/=//g;s/\//_/g;s/+/-/g')
-    tmp2=$(echo -n "$(get_ip):${shadowsocksport}:${shadowsockprotocol}:${shadowsockscipher}:${shadowsockobfs}:${tmp1}/?obfsparam=" | base64 -w0)
+    tmp2=$(echo -n "$(local_addr):443:${shadowsockprotocol}:${shadowsockscipher}:${shadowsockobfs}:${tmp1}/?obfsparam=" | base64 -w0)
     code="ssr://${tmp2}"
     qrencode -o code.png -s 8 "${code}"
     vps=ssr
