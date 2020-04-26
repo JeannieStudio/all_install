@@ -214,6 +214,7 @@ info(){
     shadowsockprotocol=`sed -n "2p" /etc/shadowsocks-r/ssr_info`
     shadowsockscipher=`sed -n "3p" /etc/shadowsocks-r/ssr_info`
     shadowsockobfs=`sed -n "4p" /etc/shadowsocks-r/ssr_info`
+    echo "$domainname" >> /etc/shadowsocks-r/ssr_info
     tmp1=$(echo -n "${shadowsockspwd}" | base64 -w0 | sed 's/=//g;s/\//_/g;s/+/-/g')
     tmp2=$(echo -n "${domainname}:443:${shadowsockprotocol}:${shadowsockscipher}:${shadowsockobfs}:${tmp1}/?obfsparam=" | base64 -w0)
     code="ssr://${tmp2}"

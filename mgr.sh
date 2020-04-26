@@ -288,6 +288,7 @@ mgr(){
             shadowsockprotocol=`sed -n "2p" /etc/shadowsocks-r/ssr_info`
             shadowsockscipher=`sed -n "3p" /etc/shadowsocks-r/ssr_info`
             shadowsockobfs=`sed -n "4p" /etc/shadowsocks-r/ssr_info`
+            domainname=`sed -n "5p" /etc/shadowsocks-r/ssr_info`
             rm -f /var/www/${shadowsockspwd}.html
             rm -f /var/www/${shadowsockspwd}.png
             read -p "请输入您要修改的密码：" shadowsockspwd
