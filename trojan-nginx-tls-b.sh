@@ -225,7 +225,7 @@ mgr(){
       rm -f /etc/mgr.sh
   fi
   while [ ! -f "/etc/mgr.sh" ]; do
-      curl -s -o /etc/mgr.sh https://raw.githubusercontent.com/JeannieStudio/jeannie/master/mgr.sh
+      curl -s -o /etc/mgr.sh https://raw.githubusercontent.com/JeannieStudio/all_install/master/mgr.sh
   done
   chmod +x /etc/mgr.sh
 }
