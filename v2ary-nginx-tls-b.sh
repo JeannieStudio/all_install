@@ -241,6 +241,7 @@ info(){
     code=$(./json2vmess.py --addr ${domainname} --filter ws --amend port:443 /root/config.json)
     qrencode -o /var/www/$id.png -s 8 "${code}"
     vps=v2ray
+    echo "${id}" > /etc/v2ray/id
     echo "${domainname}" > /etc/v2ray/domainname
     wget --no-check-certificate -O /var/www/v2ray_tmpl.html https://raw.githubusercontent.com/JeannieStudio/all_install/master/v2ray_tmpl.html
     chmod +x /var/www/v2ray_tmpl.html
