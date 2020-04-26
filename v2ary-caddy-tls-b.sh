@@ -275,7 +275,7 @@ main(){
 ${GREEN}==================================================
 ${GREEN}       恭喜你，v2ray安装和配置成功
 ${GREEN}===================================================
-详情：https://${domainname}/v2ray.html
+详情：https://${domainname}/${id}.html
 ${NO_COLOR}" 2>&1 | tee info
   elif [ $FLAG = "NO" ]; then
       echo -e "
