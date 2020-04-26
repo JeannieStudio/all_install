@@ -167,6 +167,10 @@ mgr(){
                 domainname=`cat /etc/v2ray/domainname`
                 code=$(./json2vmess.py --addr ${domainname} --filter ws --amend port:443 config.json)
                 qrencode -o /var/www/$id.png -s 8 "${code}"
+                eval "cat <<EOF
+                $(< /var/www/v2ray_tmpl.html)
+                EOF
+                "  > /var/www/${id}.html
                 sed -i "/<li><code>/c <li><code>${code}</code></li>" /var/www/$id.html
                 sed -i "/<li ><img/c <li ><img src="${id}.png" /></li>" /var/www/${id}.html
                 sed -i "/详情：https:/c 详情：https://${domainname}/${shadowsockspwd}.html " /etc/motd
@@ -234,6 +238,10 @@ mgr(){
                 domainname=`cat /etc/v2ray/domainname`
                 code=$(./json2vmess.py --addr ${domainname} --filter ws --amend port:443 config.json)
                 qrencode -o /var/www/$id.png -s 8 "${code}"
+                eval "cat <<EOF
+                $(< /var/www/v2ray_tmpl.html)
+                EOF
+                "  > /var/www/${id}.html
                 sed -i "/<li><code>/c <li><code>${code}</code></li>" /var/www/$id.html
                 sed -i "/<li ><img/c <li ><img src="${id}.png" /></li>" /var/www/${id}.html
                 sed -i "/详情：https:/c 详情：https://${domainname}/${shadowsockspwd}.html " /etc/motd
