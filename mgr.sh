@@ -160,7 +160,6 @@ mgr(){
                 curl -O https://raw.githubusercontent.com/JeannieStudio/jeannie/master/config.json
                 sed -i "s/"b831381d-6324-4d53-ad4f-8cda48b30811"/$id/g" config.json
                 \cp -rf config.json /etc/v2ray/config.json
-                sed -i "/<li>UUID/c <li>UUID:$id" /var/www/${id}.html
                 sed -i '/"network": "ws",/i "security": "tls",' config.json
                 wget --no-check-certificate -O json2vmess.py https://raw.githubusercontent.com/JeannieStudio/all_install/master/json2vmess.py
                 chmod +x json2vmess.py
@@ -231,7 +230,6 @@ mgr(){
                 curl -O https://raw.githubusercontent.com/JeannieStudio/jeannie/master/config.json
                 sed -i "s/"b831381d-6324-4d53-ad4f-8cda48b30811"/$id/g" config.json
                 \cp -rf config.json /etc/v2ray/config.json
-                sed -i "/<li>UUID/c <li>UUID:$id" /var/www/${id}.html
                 sed -i '/"network": "ws",/i "security": "tls",' config.json
                 wget --no-check-certificate -O json2vmess.py https://raw.githubusercontent.com/JeannieStudio/all_install/master/json2vmess.py
                 chmod +x json2vmess.py
