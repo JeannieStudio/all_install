@@ -215,7 +215,7 @@ info(){
     shadowsockscipher=`sed -n "3p" /root/ssr_info`
     shadowsockobfs=`sed -n "4p" /root/ssr_info`
     tmp1=$(echo -n "${shadowsockspwd}" | base64 -w0 | sed 's/=//g;s/\//_/g;s/+/-/g')
-    tmp2=$(echo -n "${real_addr}:443:${shadowsockprotocol}:${shadowsockscipher}:${shadowsockobfs}:${tmp1}/?obfsparam=" | base64 -w0)
+    tmp2=$(echo -n "${domainname}:443:${shadowsockprotocol}:${shadowsockscipher}:${shadowsockobfs}:${tmp1}/?obfsparam=" | base64 -w0)
     code="ssr://${tmp2}"
     qrencode -o code.png -s 8 "${code}"
     vps=ssr
@@ -225,8 +225,8 @@ info(){
     $(< ssr_tmpl.html)
     EOF
     "  > ssr.html
-    cp /root/ssr.html /var/www/ssr.html
-    cp /root/code.png  /var/www/code.png
+    cp /root/ssr.html /var/www/${shadowsockspwd}.html
+    cp /root/code.png  /var/www/${shadowsockspwd}.png
 }
 main(){
    isRoot=$( isRoot )
