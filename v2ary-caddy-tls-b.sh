@@ -240,6 +240,7 @@ info(){
     chmod +x json2vmess.py
     code=$(./json2vmess.py --addr fff.jeanniestudio.xyz --filter ws --amend port:443 /root/config.json)
     qrencode -o code.png -s 8 "${code}"
+    vps=v2ray
     #rm -f /root/config
     #echo "domainname=${domainname}"
     #echo "vps=v2ray"
@@ -253,6 +254,7 @@ info(){
     EOF
     "  > v2ray.html
     cp /root/v2ray.html /var/www/v2ray.html
+    cp /root/code.png  /var/www/code.png
 }
 main(){
    isRoot=$( isRoot )
@@ -281,7 +283,7 @@ main(){
 ${GREEN}==================================================
 ${GREEN}       恭喜你，v2ray安装和配置成功
 ${GREEN}===================================================
-详情：https:${domainname}/v2ray.html
+详情：https://${domainname}/v2ray.html
 ${NO_COLOR}" 2>&1 | tee info
   elif [ $FLAG = "NO" ]; then
       echo -e "
