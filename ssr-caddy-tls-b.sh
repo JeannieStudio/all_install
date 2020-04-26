@@ -210,7 +210,10 @@ mgr(){
   chmod +x /etc/mgr.sh
 }
 info(){
-    cat /root/ssr_info
+    shadowsockspwd=`sed -n "1p" /root/ssr_info`
+    shadowsockprotocol=`sed -n "2p" /root/ssr_info`
+    shadowsockscipher=`sed -n "3p" /root/ssr_info`
+    shadowsockobfs=`sed -n "4p" /root/ssr_info`
     tmp1=$(echo -n "${shadowsockspwd}" | base64 -w0 | sed 's/=//g;s/\//_/g;s/+/-/g')
     tmp2=$(echo -n "$(local_addr):443:${shadowsockprotocol}:${shadowsockscipher}:${shadowsockobfs}:${tmp1}/?obfsparam=" | base64 -w0)
     code="ssr://${tmp2}"
