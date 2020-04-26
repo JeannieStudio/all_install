@@ -209,6 +209,23 @@ mgr(){
   done
   chmod +x /etc/mgr.sh
 }
+info(){
+    cp /etc/v2ray/config.json /root/config.json
+    sed -i '/"network": "ws",/i "security": "tls",' /root/config.json
+    wget --no-check-certificate -O json2vmess.py https://raw.githubusercontent.com/JeannieStudio/all_install/master/json2vmess.py
+    chmod +x json2vmess.py
+    code=$(./json2vmess.py --addr fff.jeanniestudio.xyz --filter ws --amend port:443 /root/config.json)
+    qrencode -o code.png -s 8 "${code}"
+    vps=ssr
+    wget --no-check-certificate -O ssr_tmpl.html https://raw.githubusercontent.com/JeannieStudio/all_install/master/ssr_tmpl.html
+    chmod +x ssr_tmpl.html
+    eval "cat <<EOF
+    $(< ssr_tmpl.html)
+    EOF
+    "  > ssr.html
+    cp /root/ssr.html /var/www/ssr.html
+    cp /root/code.png  /var/www/code.png
+}
 main(){
    isRoot=$( isRoot )
   if [[ "${isRoot}" != "true" ]]; then
@@ -235,6 +252,7 @@ main(){
   check_CA
   add_CA
   mgr
+  info
   echo "再睡一会儿……"
   sleep 5
   if [ $FLAG = "YES" ]; then
@@ -242,24 +260,8 @@ main(){
 ${GREEN} ===================================================
 ${GREEN}       恭喜你，SSR安装和配置成功
 ${GREEN} ===================================================
-${BLUE}域名:        ${GREEN}\"${domainname}\"
-${BLUE}端口:        ${GREEN}\"443\"
-${BLUE}密码:        ${GREEN}${pwd##*:}
-${BLUE}加密方式:    ${GREEN}${method##*:}
-${BLUE}协议:        ${GREEN}${Protocol##*:}
-${BLUE}混淆:        ${GREEN}${obfs##*:}
-${BLUE}伪装网站访问：${GREEN}https://${domainname}
-$BLUE 执行这句进入管理界面(包括重启服务、修改密 码等)：$GREEN /etc/mgr.sh
-${GREEN}=========================================================
-${BLUE} Windows客户端请从这里下载： $GREEN  https://github.com/shadowsocksrr/shadowsocksr-csharp/releases
-${BLUE} macOS客户端请从这里下载: $GREEN https://github.com/qinyuhang/ShadowsocksX-NG-R/releases
-$BLUE ios客户端到应用商店下载：$GREEN shadowrocket;
-$BLUE 安卓请客户端下载：$GREEN https://github.com/shadowsocksrr/shadowsocksr-android/releases
-$BLUE 关注jeannie studio：$GREEN https://bit.ly/2X042ea
-${GREEN}=========================================================
-${GREEN}当前检测的域名： $domainname
-${GREEN}证书有效期剩余天数:  ${RST}
-${GREEN}不用担心，证书会自动更新 $NO_COLOR " 2>&1 | tee info
+详情：https://${domainname}/ssr.html
+ $NO_COLOR " 2>&1 | tee info
     elif [ $FLAG = "NO" ]; then
       echo -e "
 $RED=====================================================

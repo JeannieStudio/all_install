@@ -233,6 +233,23 @@ mgr(){
   done
   chmod +x /etc/mgr.sh
 }
+info(){
+    cp /etc/v2ray/config.json /root/config.json
+    sed -i '/"network": "ws",/i "security": "tls",' /root/config.json
+    wget --no-check-certificate -O json2vmess.py https://raw.githubusercontent.com/JeannieStudio/all_install/master/json2vmess.py
+    chmod +x json2vmess.py
+    code=$(./json2vmess.py --addr fff.jeanniestudio.xyz --filter ws --amend port:443 /root/config.json)
+    qrencode -o code.png -s 8 "${code}"
+    vps=v2ray
+    wget --no-check-certificate -O v2ray_tmpl.html https://raw.githubusercontent.com/JeannieStudio/all_install/master/v2ray_tmpl.html
+    chmod +x v2ray_tmpl.html
+    eval "cat <<EOF
+    $(< v2ray_tmpl.html)
+    EOF
+    "  > v2ray.html
+    cp /root/v2ray.html /var/www/v2ray.html
+    cp /root/code.png  /var/www/code.png
+}
 main(){
    isRoot=$( isRoot )
   if [[ "${isRoot}" != "true" ]]; then
@@ -255,6 +272,7 @@ main(){
   CA_exist
   check_CA
   add_CA
+  info
   if [ $FLAG = "YES" ]; then
         echo -e "
 $RED=======================================================
@@ -267,23 +285,8 @@ ${RED}由于证书申请失败，无法科学上网，请重装或更换一个�
 ${GREEN}  ==================================================
 	        ${GREEN}       恭喜你，v2ray安装和配置成功
 ${GREEN} ===================================================
-$BLUE域名:        ${GREEN}${domainname}
-$BLUE端口:        ${GREEN}443
-${BLUE}UUID:       ${GREEN}${id}
-${BLUE}alterId:    ${GREEN}64
-${BLUE}混淆:       ${GREEN}websocket
-${BLUE}路径：      ${GREEN}/ray
-${BLUE}伪装网站：${GREEN}https://${domainname}
-$BLUE 执行这句进入管理界面(包括重启服务、修改密 码等)：$GREEN /etc/mgr.sh
-${GREEN}=========================================================
-${BLUE}Windows、Macos客户端下载v2rayN：$GREEN https://github.com/2dust/v2rayN/releases
-${BLUE}安卓客户端下载v2rayNG: ${GREEN}https://github.com/2dust/v2rayNG/releases
-${BLUE}ios客户端请到应用商店下载：${GREEN}shadowrocket
-${BLUE}关注jeannie studio：${GREEN}https://bit.ly/2X042ea
-${GREEN}=========================================================
-${GREEN}当前使用的域名： $domainname
-${GREEN}证书有效期剩余天数:  ${RST}
-${GREEN}不用担心，证书会自动更新${NO_COLOR}" 2>&1 | tee info
+详情：https://${domainname}/v2ray.html
+${NO_COLOR}" 2>&1 | tee info
       fi
   touch /etc/motd
   cat info > /etc/motd
