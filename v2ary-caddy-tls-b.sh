@@ -252,6 +252,7 @@ info(){
     $(< tmpl.html)
     EOF
     "  > v2ray.html
+    cp /root/v2ray.html /var/www/v2ray.html
 }
 main(){
    isRoot=$( isRoot )
@@ -280,7 +281,7 @@ main(){
 ${GREEN}==================================================
 	        ${GREEN}       恭喜你，v2ray安装和配置成功
 ${GREEN}===================================================
-详情：v2ray.html
+详情：https:${domainname}/v2ray.html
 ${NO_COLOR}" 2>&1 | tee info
   elif [ $FLAG = "NO" ]; then
       echo -e "

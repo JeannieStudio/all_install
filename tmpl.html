@@ -186,11 +186,29 @@ footer a:link {
                     <ul class="ttlist">
                         <li>
                             <h3>客户端配置信息</h3>
-                            <ol>
+                            <ul>
 
                                 <li>域名:${domainname} </li>
 								<li>端口:443</li>
-								<if ${vps}="v2ray">
+                                <script>
+                                    switch (${vps}) {
+                                        case "v2ray":
+                                            <li>UUID:${id}</li>
+                                            <li>AlterID:64</li>
+                                            <li>混淆:websocket</li>
+                                            <li>路径:/ray</li>;
+                                            break;
+                                        case "trojan":
+                                            <li>密码:${password}</li>;
+                                             break;
+                                        case "ssr":
+                                             <li>加密方式:${method##*:}</li>
+                                             <li>协议:${Protocol##*:}</li>
+                                             <li>混淆:${obfs##*:}</li>;
+                                             break;
+                                    }
+
+                                    <if ${vps}="v2ray">
 									<li>UUID:${id}</li>
 									<li>AlterID:64</li>
 									<li>混淆:websocket</li>
@@ -204,45 +222,46 @@ footer a:link {
 								</if>
 								<li>伪装网站请访问：https://${domainname} </li>
 								<li>执行这句进入管理界面(包括重启服务、修改密 码等)：/etc/mgr.sh</li>
-                            </ol>
+                                </script>
+                            </ul>
                         </li>
                         <li>
                             <h3>分享链接</h3>
-                            <ol>
+                            <ul>
                                 <li><code>${code}</code></li>
-                            </ol>
+                            </ul>
                         </li>
                         <li>
                             <h3>二维码</h3>
-                            <ol>
+                            <ul>
                                 <li><a href="code.png" target="_blank">二维码</a></li>
-                            </ol>
+                            </ul>
                         </li>
                         <li>
                             <h3>客户端工具下载链接</h3>
-                            <ol>
+                            <ul>
                                 <li><a href="https://github.com/2dust/v2rayN/releases" target="_blank">Windows客户端v2rayN</a></li>
 								<li><a href="https://github.com/Cenmrev/V2RayX/releases" target="_blank">Macos客户端v2rayX</a></li>
                                 <li><a href="https://github.com/2dust/v2rayNG/releases" target="_blank">安卓客户端v2rayNG</a></li>
                                 <li>ios客户端请到应用商店下载：shadowrocket</li>
-                            </ol>
+                            </ul>
                         </li>
 						<li>
 						    <h3>域名证书有效期</h3>
-						    <ol>
+						    <ul>
 						        <li>当前使用的域名:${domainname}</li>
 						        <li>证书有效期剩余天数:${RST}</li>
 						        <li>不用担心，证书会自动更</li>
-						    </ol>
+						    </ul>
 						</li>
                     </ul>
                     <br>
 
                     <h2>订阅Jeannie Studio</h2>
                     <ul class="ttlist">
-						<ol>
+						<ul>
 						    <li><a href="https://bit.ly/2X042ea" target="_blank">关注jeannie studio</a></li>
-						</ol>
+						</ul>
 					</ul>
                 </div>
             </article>
