@@ -144,7 +144,11 @@ mgr(){
           2)service v2ray restart
             echo -e  "${GREEN}v2ray服务启动${NO_COLOR}"
           ;;
-          3)genId
+          3)id=`cat /etc/v2ray/id`
+            rm -f /var/www/${id}.html
+            rm -f /var/www/$id.png
+            rm -f config.json
+            genId
             if [  -f "/etc/v2ray/config.json" ]; then
                 read -p  "已帮您随机产生一个uuid:
                 $id，
@@ -153,9 +157,6 @@ mgr(){
                     genId
                     read -p  "uuid:$id，满意吗？（不满意输入y,按其他键表示接受）" answer
                 done
-                rm -f /var/www/${id}.html
-                rm -f /var/www/$id.png
-                rm -f config.json
                 curl -O https://raw.githubusercontent.com/JeannieStudio/jeannie/master/config.json
                 sed -i "s/"b831381d-6324-4d53-ad4f-8cda48b30811"/$id/g" config.json
                 \cp -rf config.json /etc/v2ray/config.json
@@ -164,13 +165,14 @@ mgr(){
                 wget --no-check-certificate -O json2vmess.py https://raw.githubusercontent.com/JeannieStudio/all_install/master/json2vmess.py
                 chmod +x json2vmess.py
                 domainname=`cat /etc/v2ray/domainname`
-                code=$(./json2vmess.py --addr fff.jeanniestudio.xyz --filter ws --amend port:443 /root/config.json)
+                code=$(./json2vmess.py --addr ${domainname} --filter ws --amend port:443 /config.json)
                 qrencode -o /var/www/$id.png -s 8 "${code}"
                 sed -i "/<li><code>/c <li><code>${code}</code></li>" /var/www/$id.html
                 sed -i "/<li ><img/c <li ><img src="${id}.png" /></li>" /var/www/${id}.html
                 sed -i "/详情：https:/c 详情：https://${domainname}/${shadowsockspwd}.html " /etc/motd
                 service v2ray stop
                 service v2ray start
+                echo "${id}" > /etc/v2ray/id
                 echo -e  "${GREEN}恭喜你，UUID修改成功,详情：https://${domainname}/${id}.html ${NO_COLOR}"
             else
                 echo -e  "${RED}很遗憾，v2ray配置文件不存在${NO_COLOR}"
@@ -231,7 +233,7 @@ mgr(){
                 wget --no-check-certificate -O json2vmess.py https://raw.githubusercontent.com/JeannieStudio/all_install/master/json2vmess.py
                 chmod +x json2vmess.py
                 domainname=`cat /etc/v2ray/domainname`
-                code=$(./json2vmess.py --addr ${domainname} --filter ws --amend port:443 /root/config.json)
+                code=$(./json2vmess.py --addr ${domainname} --filter ws --amend port:443 /config.json)
                 qrencode -o /var/www/$id.png -s 8 "${code}"
                 sed -i "/<li><code>/c <li><code>${code}</code></li>" /var/www/$id.html
                 sed -i "/<li ><img/c <li ><img src="${id}.png" /></li>" /var/www/${id}.html
