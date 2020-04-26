@@ -209,7 +209,7 @@ case $aNum in
       exit
     ;;
     6)check_status
-      bash -c "$(curl -fsSL https://raw.githubusercontent.com/JeannieStudio/jeannie/master/ssr-caddy-tls-b.sh)"
+      bash -c "$(curl -fsSL https://raw.githubusercontent.com/JeannieStudio/all_install/master/ssr-caddy-tls-b.sh
       if [ "$PM" = "yum" ]; then
           echo -e "${GREEN}=========================================================
           ${GREEN}需重启系统才能生效，马上重启……${NO_COLOR}"
