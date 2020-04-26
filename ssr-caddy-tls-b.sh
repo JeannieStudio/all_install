@@ -99,7 +99,7 @@ caddy_conf(){
 }
 ssr_install(){
   /etc/init.d/shadowsocks-r stop
-   wget --no-check-certificate -O shadowsocks-all.sh https://raw.githubusercontent.com/JeannieStudio/jeannie/master/shadowsocks-all.sh
+   wget --no-check-certificate -O shadowsocks-all.sh https://raw.githubusercontent.com/JeannieStudio/all_install/master/shadowsocks-all.sh
    chmod +x shadowsocks-all.sh
    ./shadowsocks-all.sh 2>&1 | tee shadowsocks-all.log
     #分别将配置/etc/shadowsocks-r/config.json文件的第4行和第14行改为下面内容
@@ -210,6 +210,7 @@ mgr(){
   chmod +x /etc/mgr.sh
 }
 info(){
+    cat /root/ssr_info
     tmp1=$(echo -n "${shadowsockspwd}" | base64 -w0 | sed 's/=//g;s/\//_/g;s/+/-/g')
     tmp2=$(echo -n "$(local_addr):443:${shadowsockprotocol}:${shadowsockscipher}:${shadowsockobfs}:${tmp1}/?obfsparam=" | base64 -w0)
     code="ssr://${tmp2}"
