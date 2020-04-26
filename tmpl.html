@@ -191,43 +191,29 @@ code {display: block;overflow: auto;background: #f4f4f4;padding: 5px 10px;border
 
                                 <li>域名:${domainname} </li>
 								<li>端口:443</li>
-                                <script>
-                                    dom;
-                                    function dom(){
+                                <script type="text/javascript">
+                                    function myFunction(){
                                         switch (${vps}) {
                                         case "v2ray":
-                                            <li>UUID:${id}</li>
-                                            <li>AlterID:64</li>
-                                            <li>混淆:websocket</li>
-                                            <li>路径:/ray</li>;
+                                            document.write("dasdsa");
+                                            document.write("<li>UUID:${id}</li>");
+                                            document.write("<li>AlterID:64</li>");
+                                            document.write("<li>混淆:websocket</li>");
+                                            document.write("<li>路径:/ray</li")>;
                                             break;
                                         case "trojan":
-                                            <li>密码:${password}</li>;
+                                            document.write("<li>密码:${password}</li>;
                                              break;
                                         case "ssr":
-                                             <li>加密方式:${method##*:}</li>
-                                             <li>协议:${Protocol##*:}</li>
-                                             <li>混淆:${obfs##*:}</li>;
+                                             document.write("<li>加密方式:${method##*:}</li>);
+                                             document.write("<li>协议:${Protocol##*:}</li>);
+                                             document.write("<li>混淆:${obfs##*:}</li>);
                                              break;
                                     }
-
-                                    <if ${vps}="v2ray">
-									<li>UUID:${id}</li>
-									<li>AlterID:64</li>
-									<li>混淆:websocket</li>
-									<li>路径:/ray</li>
-								<elseif ${vps}="trojan"/>
-								     <li>密码:${password}</li>
-								<elseif ${vps}="ssr"/>
-								     <li>加密方式:${method##*:}</li>
-								     <li>协议:${Protocol##*:}</li>
-								     <li>混淆:${obfs##*:}</li>
-								</if>
                                     }
-
-								<li>伪装网站请访问：https://${domainname} </li>
-								<li>执行这句进入管理界面(包括重启服务、修改密 码等)：/etc/mgr.sh</li>
                                 </script>
+                                <li>伪装网站请访问：https://${domainname} </li>
+								<li>执行这句进入管理界面(包括重启服务、修改密 码等)：/etc/mgr.sh</li>
                             </ul>
                         </li>
                         <li>
