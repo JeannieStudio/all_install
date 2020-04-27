@@ -14,6 +14,10 @@ if [[ -f "/etc/v2ray/v2ray_info" ]]; then
     domainname=`sed -n "2p" /etc/v2ray/v2ray_info`
     id=`sed -n "1p" /etc/v2ray/v2ray_info`
 fi
+if [[ -f "/usr/local/etc/trojan/trojan_info" ]]; then
+    password=`sed -n "1p" /usr/local/etc/trojan/config.json`
+    domainname=`sed -n "2p" /usr/local/etc/trojan/trojan_info`
+fi
 if [ -f "/usr/sbin/nginx" ]; then
     /usr/bin/certbot renew
     sleep 2
@@ -34,6 +38,9 @@ if [ "${end_time}" != ""  ]; then
     fi
     if [[ -f "/etc/v2ray/v2ray_info" ]]; then
         sed -i "/<li>证书有效期剩余天数/c <li>证书有效期剩余天数:${RST}</li>" /var/www/${id}.html
+    fi
+    if [[ -f "/usr/local/etc/trojan/trojan_info" ]]; then
+    sed -i "/<li>证书有效期剩余天数/c <li>证书有效期剩余天数:${RST}</li>" /var/www/${password}.html
     fi
 fi
 

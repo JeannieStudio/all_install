@@ -114,7 +114,7 @@ mgr(){
             echo -e  "${GREEN}trojan服务启动${NO_COLOR}"
           ;;
           3)if [ -f "/usr/local/etc/trojan/config.json" ]; then
-               password=`sed -n "1p" /usr/local/etc/trojan/config.json`
+                password=`sed -n "1p" /usr/local/etc/trojan/config.json`
                 rm -f /var/www/${password}.html
                 rm -f /var/www/${password}.png
                 read -p "新密码：" password
