@@ -10,7 +10,7 @@ if [[ -f "/etc/shadowsocks-r/ssr_info" ]]; then
     shadowsockspwd=`sed -n "1p" /etc/shadowsocks-r/ssr_info`
     domainname=`sed -n "5p" /etc/shadowsocks-r/ssr_info`
 fi
-if [[ -f "/etc/shadowsocks-r/ssr_info" ]]; then
+if [[ -f "/etc/v2ray/v2ray_info" ]]; then
     domainname=`sed -n "2p" /etc/v2ray/v2ray_info`
     id=`sed -n "1p" /etc/v2ray/v2ray_info`
 fi
@@ -32,9 +32,8 @@ if [ "${end_time}" != ""  ]; then
     if [[ -f "/etc/shadowsocks-r/ssr_info" ]]; then
         sed -i "/<li>证书有效期剩余天数/c <li>证书有效期剩余天数:${RST}</li>" /var/www/${shadowsockspwd}.html
     fi
-    if [[ -f "/etc/shadowsocks-r/ssr_info" ]]; then
+    if [[ -f "/etc/v2ray/v2ray_info" ]]; then
         sed -i "/<li>证书有效期剩余天数/c <li>证书有效期剩余天数:${RST}</li>" /var/www/${id}.html
     fi
-
 fi
 
