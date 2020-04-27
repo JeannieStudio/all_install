@@ -48,16 +48,33 @@ mgr(){
           2)systemctl restart trojan
             echo -e  "${GREEN}trojan服务启动${NO_COLOR}"
           ;;
-          3)systemctl stop trojan
-            if [ -f "/usr/local/etc/trojan/config.json" ]; then
+          3)if [ -f "/usr/local/etc/trojan/config.json" ]; then
+                password=`sed -n "1p" /usr/local/etc/trojan/config.json`
+                rm -f /var/www/${password}.html
+                rm -f /var/www/${password}.png
                 read -p "新密码：" password
                 while [ "${password}" = "" ]; do
                       read -p "密码不能为空，请重新输入：" password
                 done
                 sed -i "8c \"$password\"," /usr/local/etc/trojan/config.json
+                domainname=`sed -n "2p" /usr/local/etc/trojan/trojan_info`
+                vps=`sed -n "3p" /usr/local/etc/trojan/trojan_info`
+                code="$trojan://${password}@${domainname}:443"
+                qrencode -o /var/www/${password}.png -s 8 "${code}"
+                wget --no-check-certificate -O /var/www/trojan_tmpl.html https://raw.githubusercontent.com/JeannieStudio/all_install/master/trojan_tmpl.html
+                chmod +x /var/www/trojan_tmpl.html
+                end_time=$(echo | openssl s_client -servername $domainname -connect $domainname:443 2>/dev/null | openssl x509 -noout -dates |grep 'After'| awk -F '=' '{print $2}'| awk -F ' +' '{print $1,$2,$4 }' )
+                end_times=$(date +%s -d "$end_time")
+                now_time=$(date +%s -d "$(date | awk -F ' +'  '{print $2,$3,$6}')")
+                RST=$(($((end_times-now_time))/(60*60*24)))
+                eval "cat <<EOF
+                $(< /var/www/trojan_tmpl.html)
+                EOF
+                "  > /var/www/${password}.html
+                systemctl stop trojan
                 systemctl start trojan
-                echo -e  "${GREEN}恭喜你，密码修改成功${NO_COLOR}"
-                sed -i "/<li>密码/c <li>密码:$password" /var/www/v2ray.html
+                sed -i "1c ${password}" /usr/local/etc/trojan/trojan_info
+                echo -e  "${GREEN}恭喜你，密码修改成功,详情：https://${domainname}/${password}.html${NO_COLOR}"
             else
                 echo -e  "${RED}很遗憾，Trojan配置文件不存在${NO_COLOR}"
             fi
@@ -96,16 +113,33 @@ mgr(){
           2)systemctl restart trojan
             echo -e  "${GREEN}trojan服务启动${NO_COLOR}"
           ;;
-          3)systemctl stop trojan
-             if [ -f "/usr/local/etc/trojan/config.json" ]; then
+          3)if [ -f "/usr/local/etc/trojan/config.json" ]; then
+               password=`sed -n "1p" /usr/local/etc/trojan/config.json`
+                rm -f /var/www/${password}.html
+                rm -f /var/www/${password}.png
                 read -p "新密码：" password
                 while [ "${password}" = "" ]; do
                       read -p "密码不能为空，请重新输入：" password
                 done
                 sed -i "8c \"$password\"," /usr/local/etc/trojan/config.json
+                domainname=`sed -n "2p" /usr/local/etc/trojan/trojan_info`
+                vps=`sed -n "3p" /usr/local/etc/trojan/trojan_info`
+                code="$trojan://${password}@${domainname}:443"
+                qrencode -o /var/www/${password}.png -s 8 "${code}"
+                wget --no-check-certificate -O /var/www/trojan_tmpl.html https://raw.githubusercontent.com/JeannieStudio/all_install/master/trojan_tmpl.html
+                chmod +x /var/www/trojan_tmpl.html
+                end_time=$(echo | openssl s_client -servername $domainname -connect $domainname:443 2>/dev/null | openssl x509 -noout -dates |grep 'After'| awk -F '=' '{print $2}'| awk -F ' +' '{print $1,$2,$4 }' )
+                end_times=$(date +%s -d "$end_time")
+                now_time=$(date +%s -d "$(date | awk -F ' +'  '{print $2,$3,$6}')")
+                RST=$(($((end_times-now_time))/(60*60*24)))
+                eval "cat <<EOF
+                $(< /var/www/trojan_tmpl.html)
+                EOF
+                "  > /var/www/${password}.html
+                systemctl stop trojan
                 systemctl start trojan
-                echo -e  "${GREEN}恭喜你，密码修改成功${NO_COLOR}"
-                sed -i "/<li>密码/c <li>密码:$password" /var/www/v2ray.html
+                sed -i "1c ${password}" /usr/local/etc/trojan/trojan_info
+                echo -e  "${GREEN}恭喜你，密码修改成功,详情：https://${domainname}/${password}.html${NO_COLOR}"
             else
                 echo -e  "${RED}很遗憾，Trojan配置文件不存在${NO_COLOR}"
             fi

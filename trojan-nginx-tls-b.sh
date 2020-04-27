@@ -230,21 +230,18 @@ mgr(){
   chmod +x /etc/mgr.sh
 }
 info(){
-    cp /etc/v2ray/config.json /root/config.json
-    sed -i '/"network": "ws",/i "security": "tls",' /root/config.json
-    wget --no-check-certificate -O json2vmess.py https://raw.githubusercontent.com/JeannieStudio/all_install/master/json2vmess.py
-    chmod +x json2vmess.py
-    code=$(./json2vmess.py --addr fff.jeanniestudio.xyz --filter ws --amend port:443 /root/config.json)
-    qrencode -o code.png -s 8 "${code}"
-    vps=ssr
-    wget --no-check-certificate -O ssr_tmpl.html https://raw.githubusercontent.com/JeannieStudio/all_install/master/ssr_tmpl.html
-    chmod +x ssr_tmpl.html
+    vps=trojan
+    echo "$password" >>/usr/local/etc/trojan/trojan_info
+    echo "$domainname" >>/usr/local/etc/trojan/trojan_info
+    echo "$vps" >>/usr/local/etc/trojan/trojan_info
+    code="$trojan://${password}@${domainname}:443"
+    qrencode -o /var/www/${password}.png -s 8 "${code}"
+    wget --no-check-certificate -O /var/www/trojan_tmpl.html https://raw.githubusercontent.com/JeannieStudio/all_install/master/trojan_tmpl.html
+    chmod +x /var/www/trojan_tmpl.html
     eval "cat <<EOF
-    $(< ssr_tmpl.html)
-    EOF
-    "  > ssr.html
-    cp /root/ssr.html /var/www/ssr.html
-    cp /root/code.png  /var/www/code.png
+      $(</var/www/trojan_tmpl.html)
+      EOF
+      " >/var/www/${password}.html
 main(){
   isRoot=$( isRoot )
   if [[ "${isRoot}" != "true" ]]; then
@@ -266,6 +263,7 @@ main(){
     check_CA
     add_CA
     mgr
+    info
 if [ $FLAG = "YES" ]; then
         echo -e "
 $RED============================================================
@@ -278,7 +276,7 @@ ${RED}由于证书申请失败，无法科学上网，请重装或更换一个�
 ${GREEN}  ==================================================
 ${GREEN}       恭喜你，Trojan安装和配置成功
 ${GREEN} ===================================================
-详情：https://${domainname}/trojan.html
+详情：https://${domainname}/${password}.html
  $NO_COLOR " 2>&1 | tee info
     fi
     touch /etc/motd
