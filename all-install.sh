@@ -183,10 +183,10 @@ ${GREEN}0. 啥也不做，退出${NO_COLOR}"
 read -p "请输入您要执行的操作的数字:" aNum
 case $aNum in
     1)check_status
-      bash -c "$(curl -fsSL https://raw.githubusercontent.com/JeannieStudio/jeannie/master/trojan-nginx-tls-b.sh)"
+      bash -c "$(curl -fsSL https://raw.githubusercontent.com/JeannieStudio/all_install/master/trojan-nginx-tls-b.sh)"
     ;;
     2)check_status
-        bash -c "$(curl -fsSL https://raw.githubusercontent.com/JeannieStudio/jeannie/master/trojan-caddy-tls-b.sh)"
+        bash -c "$(curl -fsSL https://raw.githubusercontent.com/JeannieStudio/all_install/master/trojan-caddy-tls-b.sh)"
         if [ "$PM" = "yum" ]; then
           echo -e "${GREEN}=========================================================
           ${GREEN}需重启系统才能生效，马上重启……${NO_COLOR}"
