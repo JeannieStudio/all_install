@@ -25,7 +25,7 @@ end_times=$(date +%s -d "$end_time")
 now_time=$(date +%s -d "$(date | awk -F ' +'  '{print $2,$3,$6}')")
 RST=$(($((end_times-now_time))/(60*60*24)))
 if [ "${end_time}" != ""  ]; then
-    sed -i "/<li>证书有效期剩余天数/c <li>证书有效期剩余天数:${RST}</li>" /avr/www/${shadowsockspwd}.html
-    sed -i "/<li>证书有效期剩余天数/c <li>证书有效期剩余天数:${RST}</li>" /avr/www/${id}.html
+    sed -i "/<li>证书有效期剩余天数/c <li>证书有效期剩余天数:${RST}</li>" /var/www/${shadowsockspwd}.html
+    sed -i "/<li>证书有效期剩余天数/c <li>证书有效期剩余天数:${RST}</li>" /var/www/${id}.html
 fi
 
