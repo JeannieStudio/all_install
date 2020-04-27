@@ -147,7 +147,6 @@ mgr(){
           3)rm -f /var/www/${id}.html
             rm -f /var/www/$id.png
             rm -f config.json
-            /etc/RST.sh
             genId
             if [  -f "/etc/v2ray/config.json" ]; then
                 id=`sed -n "1p" /etc/v2ray/v2ray_info`
@@ -178,6 +177,7 @@ mgr(){
                 service v2ray stop
                 service v2ray start
                 sed -i "1c ${id}" > /etc/v2ray/v2ray_info
+                /etc/RST.sh
                 echo -e  "${GREEN}恭喜你，UUID修改成功,详情：https://${domainname}/${id}.html ${NO_COLOR}"
             else
                 echo -e  "${RED}很遗憾，v2ray配置文件不存在${NO_COLOR}"
@@ -219,7 +219,6 @@ mgr(){
           3)rm -f /var/www/${id}.html
             rm -f /var/www/$id.png
             rm -f config.json
-            /etc/RST.sh
             genId
             if [  -f "/etc/v2ray/config.json" ]; then
                 id=`sed -n "1p" /etc/v2ray/v2ray_info`
@@ -249,6 +248,7 @@ mgr(){
                 service v2ray stop
                 service v2ray start
                 sed -i "1c ${id}" > /etc/v2ray/v2ray_info
+                /etc/RST.sh
                 echo -e  "${GREEN}恭喜你，UUID修改成功,详情：https://${domainname}/${id}.html ${NO_COLOR}"
             else
                 echo -e  "${RED}很遗憾，v2ray配置文件不存在${NO_COLOR}"
@@ -287,8 +287,7 @@ mgr(){
           2)/etc/init.d/shadowsocks-r restart
             echo -e  "${GREEN}ssr服务启动${NO_COLOR}"
           ;;
-          3)/etc/RST.sh
-            shadowsockspwd=`sed -n "1p" /etc/shadowsocks-r/ssr_info`
+          3)shadowsockspwd=`sed -n "1p" /etc/shadowsocks-r/ssr_info`
             shadowsockprotocol=`sed -n "2p" /etc/shadowsocks-r/ssr_info`
             shadowsockscipher=`sed -n "3p" /etc/shadowsocks-r/ssr_info`
             shadowsockobfs=`sed -n "4p" /etc/shadowsocks-r/ssr_info`
@@ -310,6 +309,7 @@ mgr(){
             sed -i "/详情：https:/c 详情：https://${domainname}/${shadowsockspwd}.html " /etc/motd
             /etc/init.d/shadowsocks-r stop
             /etc/init.d/shadowsocks-r start
+            /etc/RST.sh
             echo -e  "${GREEN}恭喜你，密码修改成功,详情：https://${domainname}/${shadowsockspwd}.html ${NO_COLOR}"
           ;;
           4)caddy -service stop

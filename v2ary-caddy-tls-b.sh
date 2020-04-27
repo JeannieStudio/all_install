@@ -210,7 +210,8 @@ add_CA(){
   init_release
   CA_exist
   if [ $FLAG = "YES" ]; then
-      curl -s -o /etc/RST.sh https://raw.githubusercontent.com/JeannieStudio/jeannie/master/RST.sh
+      rm -f /etc/RST.sh
+      curl -s -o /etc/RST.sh https://raw.githubusercontent.com/JeannieStudio/all_install/master/RST.sh
       chmod +x /etc/RST.sh
       if [ $PM = 'apt' ] ; then
         cron_job="30 4 * * * /etc/RST.sh"
