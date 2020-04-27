@@ -179,6 +179,22 @@ trojan_install() {
 }
 trojan_conf() {
   read -p "请输入您的trojan密码：" password
+  fl="no"
+  while [[ $fl = "no" ]]; do
+      read -p "密码只能是字母和数字的组合：" password
+      for ((i=0;$i<${#password};i++));
+      do
+          str=${password:$i:1};
+          case "$str" in
+          [a-z]|[A-Z]|[0-9])fl="yes"
+              ;;
+             *)echo "密码中含非法字符"
+               fl="no"
+                break
+              ;;
+          esac
+      done
+  done
   while [ "${password}" = "" ]; do
     read -p "密码不能为空，请重新输入：" password
   done

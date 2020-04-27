@@ -53,6 +53,22 @@ mgr(){
                 rm -f /var/www/${password}.html
                 rm -f /var/www/${password}.png
                 read -p "新密码：" password
+                fl="no"
+                while [[ $fl = "no" ]]; do
+                    read -p "密码只能是字母和数字的组合：" password
+                    for ((i=0;$i<${#password};i++));
+                    do
+                        str=${password:$i:1};
+                        case "$str" in
+                        [a-z]|[A-Z]|[0-9])fl="yes"
+                            ;;
+                           *)echo "密码中含非法字符"
+                             fl="no"
+                              break
+                            ;;
+                        esac
+                    done
+                done
                 while [ "${password}" = "" ]; do
                       read -p "密码不能为空，请重新输入：" password
                 done
@@ -119,6 +135,22 @@ mgr(){
                 rm -f /var/www/${password}.html
                 rm -f /var/www/${password}.png
                 read -p "新密码：" password
+                fl="no"
+                while [[ $fl = "no" ]]; do
+                    read -p "密码只能是字母和数字的组合：" password
+                    for ((i=0;$i<${#password};i++));
+                    do
+                        str=${password:$i:1};
+                        case "$str" in
+                        [a-z]|[A-Z]|[0-9])fl="yes"
+                            ;;
+                           *)echo "密码中含非法字符"
+                             fl="no"
+                              break
+                            ;;
+                        esac
+                    done
+                done
                 while [ "${password}" = "" ]; do
                       read -p "密码不能为空，请重新输入：" password
                 done
@@ -335,6 +367,26 @@ mgr(){
             rm -f /var/www/${shadowsockspwd}.html
             rm -f /var/www/${shadowsockspwd}.png
             read -p "请输入您要修改的密码：" shadowsockspwd
+            fl="no"
+            while [[ $fl = "no" ]]; do
+                read -p "密码只能是字母和数字的组合：" shadowsockspwd
+                # [ -z "${shadowsockspwd}" ] && shadowsockspwd="teddysun.com"
+                for ((i=0;$i<${#shadowsockspwd};i++));
+                do
+                    str=${shadowsockspwd:$i:1};
+                    case "$str" in
+                    [a-z]|[A-Z]|[0-9])fl="yes"
+                        ;;
+                       *)echo "密码中含非法字符"
+                         fl="no"
+                          break
+                        ;;
+                    esac
+                done
+            done
+            while [ "${shadowsockspwd}" = "" ]; do
+              read -p "密码不能为空，请重新输入：" shadowsockspwd
+            done
             sed -i "7c \"password\":\"$shadowsockspwd\"," /etc/shadowsocks-r/config.json
             tmp1=$(echo -n "${shadowsockspwd}" | base64 -w0 | sed 's/=//g;s/\//_/g;s/+/-/g')
             tmp2=$(echo -n "${domainname}:443:${shadowsockprotocol}:${shadowsockscipher}:${shadowsockobfs}:${tmp1}/?obfsparam=" | base64 -w0)

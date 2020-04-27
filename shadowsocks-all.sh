@@ -626,8 +626,26 @@ install_select(){
 
 install_prepare_password(){
     echo "Please enter password for ${software[${selected}-1]}"
-    read -p "(Default password: teddysun.com):" shadowsockspwd
-    [ -z "${shadowsockspwd}" ] && shadowsockspwd="teddysun.com"
+    fl="no"
+    while [[ $fl = "no" ]]; do
+        read -p "密码只能是字母和数字的组合：" shadowsockspwd
+        # [ -z "${shadowsockspwd}" ] && shadowsockspwd="teddysun.com"
+        for ((i=0;$i<${#shadowsockspwd};i++));
+        do
+            str=${shadowsockspwd:$i:1};
+            case "$str" in
+            [a-z]|[A-Z]|[0-9])fl="yes"
+                ;;
+               *)echo "密码中含非法字符"
+                 fl="no"
+                  break
+                ;;
+            esac
+        done
+    done
+    while [ "${shadowsockspwd}" = "" ]; do
+      read -p "密码不能为空，请重新输入：" shadowsockspwd
+    done
     echo
     echo "password = ${shadowsockspwd}"
     echo
