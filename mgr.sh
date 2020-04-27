@@ -59,7 +59,7 @@ mgr(){
                 sed -i "8c \"$password\"," /usr/local/etc/trojan/config.json
                 domainname=`sed -n "2p" /usr/local/etc/trojan/trojan_info`
                 vps=`sed -n "3p" /usr/local/etc/trojan/trojan_info`
-                code="$trojan://${password}@${domainname}:443"
+                code="trojan://${password}@${domainname}:443"
                 qrencode -o /var/www/${password}.png -s 8 "${code}"
                 wget --no-check-certificate -O /var/www/trojan_tmpl.html https://raw.githubusercontent.com/JeannieStudio/all_install/master/trojan_tmpl.html
                 chmod +x /var/www/trojan_tmpl.html
@@ -125,7 +125,7 @@ mgr(){
                 sed -i "8c \"$password\"," /usr/local/etc/trojan/config.json
                 domainname=`sed -n "2p" /usr/local/etc/trojan/trojan_info`
                 vps=`sed -n "3p" /usr/local/etc/trojan/trojan_info`
-                code="$trojan://${password}@${domainname}:443"
+                code="trojan://${password}@${domainname}:443"
                 qrencode -o /var/www/${password}.png -s 8 "${code}"
                 wget --no-check-certificate -O /var/www/trojan_tmpl.html https://raw.githubusercontent.com/JeannieStudio/all_install/master/trojan_tmpl.html
                 chmod +x /var/www/trojan_tmpl.html

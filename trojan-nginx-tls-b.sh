@@ -253,7 +253,7 @@ info() {
   echo "$password" >>/usr/local/etc/trojan/trojan_info
   echo "$domainname" >>/usr/local/etc/trojan/trojan_info
   echo "$vps" >>/usr/local/etc/trojan/trojan_info
-  code="$trojan://${password}@${domainname}:443"
+  code="trojan://${password}@${domainname}:443"
   qrencode -o /var/www/${password}.png -s 8 "${code}"
   wget --no-check-certificate -O /var/www/trojan_tmpl.html https://raw.githubusercontent.com/JeannieStudio/all_install/master/trojan_tmpl.html
   chmod +x /var/www/trojan_tmpl.html
