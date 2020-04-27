@@ -212,6 +212,7 @@ mgr(){
             echo -e  "${GREEN}v2ray服务启动${NO_COLOR}"
           ;;
           3)if [ -f "/etc/v2ray/config.json" ]; then
+                id=`sed -n "1p" /etc/v2ray/v2ray_info`
                 rm -f /var/www/${id}.html
                 rm -f /var/www/$id.png
                 rm -f code_config.json
