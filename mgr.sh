@@ -56,7 +56,7 @@ mgr(){
                 while [ "${password}" = "" ]; do
                       read -p "密码不能为空，请重新输入：" password
                 done
-                sed -i "8c \"$password\"," /usr/local/etc/trojan/trojan_info
+                sed -i "8c \"$password\"," /usr/local/etc/trojan/config.json
                 domainname=`sed -n "2p" /usr/local/etc/trojan/trojan_info`
                 vps=`sed -n "3p" /usr/local/etc/trojan/trojan_info`
                 code="trojan://${password}@${domainname}:443"
@@ -122,7 +122,7 @@ mgr(){
                 while [ "${password}" = "" ]; do
                       read -p "密码不能为空，请重新输入：" password
                 done
-                sed -i "8c \"$password\"," /usr/local/etc/trojan/trojan_info
+                sed -i "8c \"$password\"," /usr/local/etc/trojan/config.json
                 domainname=`sed -n "2p" /usr/local/etc/trojan/trojan_info`
                 vps=`sed -n "3p" /usr/local/etc/trojan/trojan_info`
                 code="trojan://${password}@${domainname}:443"
