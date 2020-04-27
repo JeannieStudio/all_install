@@ -342,7 +342,7 @@ mgr(){
       if [ -e "/usr/local/bin/caddy" -a -d "/usr/local/shadowsocks" ]; then
             echo -e "
       $FUCHSIA===================================================
-      ${GREEN}系统检测到您目前安装的是v2ray+caddy+tls一键脚本
+      ${GREEN}系统检测到您目前安装的是ssr+caddy+tls一键脚本
       $FUCHSIA===================================================
       ${GREEN}1. 停止ssr      ${GREEN}2. 重启ssr
       $FUCHSIA===================================================
