@@ -144,12 +144,14 @@ mgr(){
           2)service v2ray restart
             echo -e  "${GREEN}v2ray服务启动${NO_COLOR}"
           ;;
-          3)id=`cat /etc/v2ray/id`
-            rm -f /var/www/${id}.html
+          3)rm -f /var/www/${id}.html
             rm -f /var/www/$id.png
             rm -f config.json
+            /etc/RST.sh
             genId
             if [  -f "/etc/v2ray/config.json" ]; then
+                id=`sed -n "1p" /etc/v2ray/v2ray_info`
+                domainname=`sed -n "2p" /etc/v2ray/v2ray_info`
                 read -p  "已帮您随机产生一个uuid:
                 $id，
                 满意吗？（输入y表示不满意再生成一个，按其他键表示接受）" answer
@@ -175,7 +177,7 @@ mgr(){
                 sed -i "/详情：https:/c 详情：https://${domainname}/${id}.html " /etc/motd
                 service v2ray stop
                 service v2ray start
-                echo "${id}" > /etc/v2ray/id
+                sed -i "1c ${id}" > /etc/v2ray/v2ray_info
                 echo -e  "${GREEN}恭喜你，UUID修改成功,详情：https://${domainname}/${id}.html ${NO_COLOR}"
             else
                 echo -e  "${RED}很遗憾，v2ray配置文件不存在${NO_COLOR}"
@@ -214,12 +216,14 @@ mgr(){
           2)service v2ray restart
             echo -e  "${GREEN}v2ray服务启动${NO_COLOR}"
           ;;
-          3)id=`cat /etc/v2ray/id`
-            rm -f /var/www/${id}.html
+          3)rm -f /var/www/${id}.html
             rm -f /var/www/$id.png
             rm -f config.json
+            /etc/RST.sh
             genId
             if [  -f "/etc/v2ray/config.json" ]; then
+                id=`sed -n "1p" /etc/v2ray/v2ray_info`
+                domainname=`sed -n "2p" /etc/v2ray/v2ray_info`
                 read -p  "已帮您随机产生一个uuid:
                 $id，
                 满意吗？（输入y表示不满意再生成一个，按其他键表示接受）" answer
@@ -233,7 +237,6 @@ mgr(){
                 sed -i '/"network": "ws",/i "security": "tls",' config.json
                 wget --no-check-certificate -O json2vmess.py https://raw.githubusercontent.com/JeannieStudio/all_install/master/json2vmess.py
                 chmod +x json2vmess.py
-                domainname=`cat /etc/v2ray/domainname`
                 code=$(./json2vmess.py --addr ${domainname} --filter ws --amend port:443 config.json)
                 qrencode -o /var/www/$id.png -s 8 "${code}"
                 eval "cat <<EOF
@@ -245,7 +248,7 @@ mgr(){
                 sed -i "/详情：https:/c 详情：https://${domainname}/${id}.html " /etc/motd
                 service v2ray stop
                 service v2ray start
-                echo "${id}" > /etc/v2ray/id
+                sed -i "1c ${id}" > /etc/v2ray/v2ray_info
                 echo -e  "${GREEN}恭喜你，UUID修改成功,详情：https://${domainname}/${id}.html ${NO_COLOR}"
             else
                 echo -e  "${RED}很遗憾，v2ray配置文件不存在${NO_COLOR}"
@@ -284,11 +287,13 @@ mgr(){
           2)/etc/init.d/shadowsocks-r restart
             echo -e  "${GREEN}ssr服务启动${NO_COLOR}"
           ;;
-          3)shadowsockspwd=`sed -n "1p" /etc/shadowsocks-r/ssr_info`
+          3)/etc/RST.sh
+            shadowsockspwd=`sed -n "1p" /etc/shadowsocks-r/ssr_info`
             shadowsockprotocol=`sed -n "2p" /etc/shadowsocks-r/ssr_info`
             shadowsockscipher=`sed -n "3p" /etc/shadowsocks-r/ssr_info`
             shadowsockobfs=`sed -n "4p" /etc/shadowsocks-r/ssr_info`
             domainname=`sed -n "5p" /etc/shadowsocks-r/ssr_info`
+            vps=`sed -n "6p" /etc/shadowsocks-r/ssr_info`
             rm -f /var/www/${shadowsockspwd}.html
             rm -f /var/www/${shadowsockspwd}.png
             read -p "请输入您要修改的密码：" shadowsockspwd

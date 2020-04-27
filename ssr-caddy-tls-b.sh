@@ -214,12 +214,14 @@ info(){
     shadowsockprotocol=`sed -n "2p" /etc/shadowsocks-r/ssr_info`
     shadowsockscipher=`sed -n "3p" /etc/shadowsocks-r/ssr_info`
     shadowsockobfs=`sed -n "4p" /etc/shadowsocks-r/ssr_info`
+    vps=ssr
     echo "$domainname" >> /etc/shadowsocks-r/ssr_info
+    echo "$vps" >> /etc/shadowsocks-r/ssr_info
     tmp1=$(echo -n "${shadowsockspwd}" | base64 -w0 | sed 's/=//g;s/\//_/g;s/+/-/g')
     tmp2=$(echo -n "${domainname}:443:${shadowsockprotocol}:${shadowsockscipher}:${shadowsockobfs}:${tmp1}/?obfsparam=" | base64 -w0)
     code="ssr://${tmp2}"
     qrencode -o /var/www/${shadowsockspwd}.png -s 8 "${code}"
-    vps=ssr
+
     wget --no-check-certificate -O /var/www/ssr_tmpl.html https://raw.githubusercontent.com/JeannieStudio/all_install/master/ssr_tmpl.html
     chmod +x /var/www/ssr_tmpl.html
     eval "cat <<EOF

@@ -234,6 +234,7 @@ mgr(){
   chmod +x /etc/mgr.sh
 }
 info(){
+    rm -f /etc/v2ray/v2ray_info
     cp /etc/v2ray/config.json /root/config.json
     sed -i '/"network": "ws",/i "security": "tls",' /root/config.json
     wget --no-check-certificate -O json2vmess.py https://raw.githubusercontent.com/JeannieStudio/all_install/master/json2vmess.py
@@ -241,8 +242,8 @@ info(){
     code=$(./json2vmess.py --addr ${domainname} --filter ws --amend port:443 /root/config.json)
     qrencode -o /var/www/$id.png -s 8 "${code}"
     vps=v2ray
-    echo "${id}" > /etc/v2ray/id
-    echo "${domainname}" > /etc/v2ray/domainname
+    echo "${id}" >> /etc/v2ray/v2ray_info
+    echo "${domainname}" >> /etc/v2ray/v2ray_info
     wget --no-check-certificate -O /var/www/v2ray_tmpl.html https://raw.githubusercontent.com/JeannieStudio/all_install/master/v2ray_tmpl.html
     chmod +x /var/www/v2ray_tmpl.html
     eval "cat <<EOF

@@ -6,7 +6,10 @@ BLUE="\033[0;36m"
 green(){
     echo -e "\033[32m\033[01m$1\033[0m"
 }
-domainname=$(cat /etc/domainname)
+domainname=`sed -n "2p" /etc/v2ray/v2ray_info`
+id=`sed -n "1p" /etc/v2ray/v2ray_info`
+shadowsockspwd=`sed -n "1p" /etc/shadowsocks-r/ssr_info`
+domainname=`sed -n "5p" /etc/shadowsocks-r/ssr_info`
 if [ -f "/usr/sbin/nginx" ]; then
     /usr/bin/certbot-2 renew
     sleep 2
@@ -22,6 +25,7 @@ end_times=$(date +%s -d "$end_time")
 now_time=$(date +%s -d "$(date | awk -F ' +'  '{print $2,$3,$6}')")
 RST=$(($((end_times-now_time))/(60*60*24)))
 if [ "${end_time}" != ""  ]; then
-    sed -i "/证书有效期剩余天数/c 证书有效期剩余天数:  $RST" /avr/www/v2ray.html
+    sed -i "/证书有效期剩余天数/c 证书有效期剩余天数:  $RST" /avr/www/${shadowsockspwd}.html
+    sed -i "/证书有效期剩余天数/c 证书有效期剩余天数:  $RST" /avr/www/${id}.html
 fi
 
