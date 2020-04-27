@@ -74,6 +74,7 @@ mgr(){
                 systemctl stop trojan
                 systemctl start trojan
                 sed -i "1c ${password}" /usr/local/etc/trojan/trojan_info
+                sed -i "/详情：https:/c 详情：https://${domainname}/${password}.html " /etc/motd
                 echo -e  "${GREEN}恭喜你，密码修改成功,详情：https://${domainname}/${password}.html${NO_COLOR}"
             else
                 echo -e  "${RED}很遗憾，Trojan配置文件不存在${NO_COLOR}"
@@ -139,6 +140,7 @@ mgr(){
                 systemctl stop trojan
                 systemctl start trojan
                 sed -i "1c ${password}" /usr/local/etc/trojan/trojan_info
+                sed -i "/详情：https:/c 详情：https://${domainname}/${password}.html " /etc/motd
                 echo -e  "${GREEN}恭喜你，密码修改成功,详情：https://${domainname}/${password}.html${NO_COLOR}"
             else
                 echo -e  "${RED}很遗憾，Trojan配置文件不存在${NO_COLOR}"
@@ -350,7 +352,6 @@ mgr(){
             sed -i "/详情：https:/c 详情：https://${domainname}/${shadowsockspwd}.html " /etc/motd
             /etc/init.d/shadowsocks-r stop
             /etc/init.d/shadowsocks-r start
-
             echo -e  "${GREEN}恭喜你，密码修改成功,详情：https://${domainname}/${shadowsockspwd}.html ${NO_COLOR}"
           ;;
           4)caddy -service stop
