@@ -94,6 +94,7 @@ uninstall_v2ray(){
          service v2ray stop
          rm -rf /usr/bin/v2ray
          rm -f /etc/systemd/system/v2ray.service
+         rm -rf /etc/v2ray
       fi
 }
 uninstall_ssr(){
