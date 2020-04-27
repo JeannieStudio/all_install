@@ -245,6 +245,7 @@ info(){
     vps=v2ray
     echo "${id}" >> /etc/v2ray/v2ray_info
     echo "${domainname}" >> /etc/v2ray/v2ray_info
+    echo "${vps}" >> /etc/v2ray/v2ray_info
     wget --no-check-certificate -O /var/www/v2ray_tmpl.html https://raw.githubusercontent.com/JeannieStudio/all_install/master/v2ray_tmpl.html
     chmod +x /var/www/v2ray_tmpl.html
     eval "cat <<EOF

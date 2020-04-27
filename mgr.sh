@@ -151,6 +151,7 @@ mgr(){
                 rm -f code_config.json
                 genId
                 domainname=`sed -n "2p" /etc/v2ray/v2ray_info`
+                vps=`sed -n "3p" /etc/v2ray/v2ray_info`
                 read -p  "已帮您随机产生一个uuid:
                 $id，
                 满意吗？（输入y表示不满意再生成一个，按其他键表示接受）" answer
@@ -166,6 +167,10 @@ mgr(){
                 chmod +x json2vmess.py
                 code=$(./json2vmess.py --addr ${domainname} --filter ws --amend port:443 code_config.json)
                 qrencode -o /var/www/$id.png -s 8 "${code}"
+                end_time=$(echo | openssl s_client -servername $domainname -connect $domainname:443 2>/dev/null | openssl x509 -noout -dates |grep 'After'| awk -F '=' '{print $2}'| awk -F ' +' '{print $1,$2,$4 }' )
+                end_times=$(date +%s -d "$end_time")
+                now_time=$(date +%s -d "$(date | awk -F ' +'  '{print $2,$3,$6}')")
+                RST=$(($((end_times-now_time))/(60*60*24)))
                 eval "cat <<EOF
                 $(< /var/www/v2ray_tmpl.html)
                 EOF
@@ -219,6 +224,7 @@ mgr(){
                 rm -f code_config.json
                 genId
                 domainname=`sed -n "2p" /etc/v2ray/v2ray_info`
+                vps=`sed -n "3p" /etc/v2ray/v2ray_info`
                 read -p  "已帮您随机产生一个uuid:
                 $id，
                 满意吗？（输入y表示不满意再生成一个，按其他键表示接受）" answer
@@ -234,6 +240,10 @@ mgr(){
                 chmod +x json2vmess.py
                 code=$(./json2vmess.py --addr ${domainname} --filter ws --amend port:443 code_config.json)
                 qrencode -o /var/www/$id.png -s 8 "${code}"
+                end_time=$(echo | openssl s_client -servername $domainname -connect $domainname:443 2>/dev/null | openssl x509 -noout -dates |grep 'After'| awk -F '=' '{print $2}'| awk -F ' +' '{print $1,$2,$4 }' )
+                end_times=$(date +%s -d "$end_time")
+                now_time=$(date +%s -d "$(date | awk -F ' +'  '{print $2,$3,$6}')")
+                RST=$(($((end_times-now_time))/(60*60*24)))
                 eval "cat <<EOF
                 $(< /var/www/v2ray_tmpl.html)
                 EOF
@@ -294,6 +304,10 @@ mgr(){
             tmp2=$(echo -n "${domainname}:443:${shadowsockprotocol}:${shadowsockscipher}:${shadowsockobfs}:${tmp1}/?obfsparam=" | base64 -w0)
             code="ssr://${tmp2}"
             qrencode -o /var/www/${shadowsockspwd}.png -s 8 "${code}"
+            end_time=$(echo | openssl s_client -servername $domainname -connect $domainname:443 2>/dev/null | openssl x509 -noout -dates |grep 'After'| awk -F '=' '{print $2}'| awk -F ' +' '{print $1,$2,$4 }' )
+            end_times=$(date +%s -d "$end_time")
+            now_time=$(date +%s -d "$(date | awk -F ' +'  '{print $2,$3,$6}')")
+            RST=$(($((end_times-now_time))/(60*60*24)))
             eval "cat <<EOF
             $(< /var/www/ssr_tmpl.html)
             EOF
@@ -302,7 +316,7 @@ mgr(){
             sed -i "/详情：https:/c 详情：https://${domainname}/${shadowsockspwd}.html " /etc/motd
             /etc/init.d/shadowsocks-r stop
             /etc/init.d/shadowsocks-r start
-            /etc/RST.sh
+
             echo -e  "${GREEN}恭喜你，密码修改成功,详情：https://${domainname}/${shadowsockspwd}.html ${NO_COLOR}"
           ;;
           4)caddy -service stop
