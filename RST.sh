@@ -15,7 +15,7 @@ if [[ -f "/etc/v2ray/v2ray_info" ]]; then
     id=`sed -n "1p" /etc/v2ray/v2ray_info`
 fi
 if [ -f "/usr/sbin/nginx" ]; then
-    /usr/bin/certbot-2 renew
+    /usr/bin/certbot renew
     sleep 2
     /usr/sbin/nginx -s stop
     sleep 2
