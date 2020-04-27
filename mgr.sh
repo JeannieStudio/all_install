@@ -145,6 +145,7 @@ mgr(){
             echo -e  "${GREEN}v2ray服务启动${NO_COLOR}"
           ;;
           3)if [  -f "/etc/v2ray/config.json" ]; then
+                id=`sed -n "1p" /etc/v2ray/v2ray_info`
                 rm -f /var/www/${id}.html
                 rm -f /var/www/$id.png
                 rm -f code_config.json
@@ -172,7 +173,7 @@ mgr(){
                 sed -i "/详情：https:/c 详情：https://${domainname}/${id}.html " /etc/motd
                 service v2ray stop
                 service v2ray start
-                sed -i "1c ${id}" > /etc/v2ray/v2ray_info
+                sed -i "1c ${id}" /etc/v2ray/v2ray_info
                 echo -e  "${GREEN}恭喜你，UUID修改成功,详情：https://${domainname}/${id}.html ${NO_COLOR}"
             else
                 echo -e  "${RED}很遗憾，v2ray配置文件不存在${NO_COLOR}"
@@ -240,7 +241,7 @@ mgr(){
                 sed -i "/详情：https:/c 详情：https://${domainname}/${id}.html " /etc/motd
                 service v2ray stop
                 service v2ray start
-                sed -i "1c ${id}" > /etc/v2ray/v2ray_info
+                sed -i "1c ${id}" /etc/v2ray/v2ray_info
                 echo -e  "${GREEN}恭喜你，UUID修改成功,详情：https://${domainname}/${id}.html ${NO_COLOR}"
             else
                 echo -e  "${RED}很遗憾，v2ray配置文件不存在${NO_COLOR}"
