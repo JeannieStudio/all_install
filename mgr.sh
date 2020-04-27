@@ -49,14 +49,14 @@ mgr(){
             echo -e  "${GREEN}trojan服务启动${NO_COLOR}"
           ;;
           3)if [ -f "/usr/local/etc/trojan/config.json" ]; then
-                password=`sed -n "1p" /usr/local/etc/trojan/config.json`
+                password=`sed -n "1p" /usr/local/etc/trojan/trojan_info`
                 rm -f /var/www/${password}.html
                 rm -f /var/www/${password}.png
                 read -p "新密码：" password
                 while [ "${password}" = "" ]; do
                       read -p "密码不能为空，请重新输入：" password
                 done
-                sed -i "8c \"$password\"," /usr/local/etc/trojan/config.json
+                sed -i "8c \"$password\"," /usr/local/etc/trojan/trojan_info
                 domainname=`sed -n "2p" /usr/local/etc/trojan/trojan_info`
                 vps=`sed -n "3p" /usr/local/etc/trojan/trojan_info`
                 code="trojan://${password}@${domainname}:443"
@@ -115,14 +115,14 @@ mgr(){
             echo -e  "${GREEN}trojan服务启动${NO_COLOR}"
           ;;
           3)if [ -f "/usr/local/etc/trojan/config.json" ]; then
-                password=`sed -n "1p" /usr/local/etc/trojan/config.json`
+                password=`sed -n "1p" /usr/local/etc/trojan/trojan_info`
                 rm -f /var/www/${password}.html
                 rm -f /var/www/${password}.png
                 read -p "新密码：" password
                 while [ "${password}" = "" ]; do
                       read -p "密码不能为空，请重新输入：" password
                 done
-                sed -i "8c \"$password\"," /usr/local/etc/trojan/config.json
+                sed -i "8c \"$password\"," /usr/local/etc/trojan/trojan_info
                 domainname=`sed -n "2p" /usr/local/etc/trojan/trojan_info`
                 vps=`sed -n "3p" /usr/local/etc/trojan/trojan_info`
                 code="trojan://${password}@${domainname}:443"
