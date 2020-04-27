@@ -149,7 +149,6 @@ mgr(){
             rm -f config.json
             genId
             if [  -f "/etc/v2ray/config.json" ]; then
-                id=`sed -n "1p" /etc/v2ray/v2ray_info`
                 domainname=`sed -n "2p" /etc/v2ray/v2ray_info`
                 read -p  "已帮您随机产生一个uuid:
                 $id，
@@ -164,20 +163,16 @@ mgr(){
                 sed -i '/"network": "ws",/i "security": "tls",' config.json
                 wget --no-check-certificate -O json2vmess.py https://raw.githubusercontent.com/JeannieStudio/all_install/master/json2vmess.py
                 chmod +x json2vmess.py
-                domainname=`cat /etc/v2ray/domainname`
                 code=$(./json2vmess.py --addr ${domainname} --filter ws --amend port:443 config.json)
                 qrencode -o /var/www/$id.png -s 8 "${code}"
                 eval "cat <<EOF
                 $(< /var/www/v2ray_tmpl.html)
                 EOF
                 "  > /var/www/${id}.html
-                sed -i "/<li><code>/c <li><code>${code}</code></li>" /var/www/$id.html
-                sed -i "/<li ><img/c <li ><img src="${id}.png" /></li>" /var/www/${id}.html
                 sed -i "/详情：https:/c 详情：https://${domainname}/${id}.html " /etc/motd
                 service v2ray stop
                 service v2ray start
                 sed -i "1c ${id}" > /etc/v2ray/v2ray_info
-                /etc/RST.sh
                 echo -e  "${GREEN}恭喜你，UUID修改成功,详情：https://${domainname}/${id}.html ${NO_COLOR}"
             else
                 echo -e  "${RED}很遗憾，v2ray配置文件不存在${NO_COLOR}"
@@ -221,7 +216,6 @@ mgr(){
             rm -f config.json
             genId
             if [  -f "/etc/v2ray/config.json" ]; then
-                id=`sed -n "1p" /etc/v2ray/v2ray_info`
                 domainname=`sed -n "2p" /etc/v2ray/v2ray_info`
                 read -p  "已帮您随机产生一个uuid:
                 $id，
@@ -242,13 +236,10 @@ mgr(){
                 $(< /var/www/v2ray_tmpl.html)
                 EOF
                 "  > /var/www/${id}.html
-                sed -i "/<li><code>/c <li><code>${code}</code></li>" /var/www/$id.html
-                sed -i "/<li ><img/c <li ><img src="${id}.png" /></li>" /var/www/${id}.html
                 sed -i "/详情：https:/c 详情：https://${domainname}/${id}.html " /etc/motd
                 service v2ray stop
                 service v2ray start
                 sed -i "1c ${id}" > /etc/v2ray/v2ray_info
-                /etc/RST.sh
                 echo -e  "${GREEN}恭喜你，UUID修改成功,详情：https://${domainname}/${id}.html ${NO_COLOR}"
             else
                 echo -e  "${RED}很遗憾，v2ray配置文件不存在${NO_COLOR}"
