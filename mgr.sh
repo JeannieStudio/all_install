@@ -211,7 +211,7 @@ mgr(){
           2)service v2ray restart
             echo -e  "${GREEN}v2ray服务启动${NO_COLOR}"
           ;;
-          3)if [  -f "/etc/v2ray/config.json" ]; then
+          3)if [ -f "/etc/v2ray/config.json" ]; then
                 rm -f /var/www/${id}.html
                 rm -f /var/www/$id.png
                 rm -f code_config.json
