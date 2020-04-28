@@ -54,9 +54,10 @@ tools_install(){
     apt-get install -y cron
   elif [ $PM = 'yum' ]; then
     yum update -y
-    yum -y install bind-utils wget unzip zip curl tar git nginx crontabs libpng libpng-devel qrencode
+    yum -y install bind-utils wget unzip zip curl tar git nginx crontabs libpng libpng-devel qrencode python36
     yum install -y epel-release
     yum install -y certbot
+    ln -s python3.6 python3
   fi
 }
 web_get(){
