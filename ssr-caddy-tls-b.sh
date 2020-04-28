@@ -55,7 +55,7 @@ tools_install(){
   init_release
   if [ $PM = 'apt' ] ; then
     apt-get update -y
-    apt-get install -y dnsutils wget unzip zip curl tar git
+    apt-get install -y dnsutils wget unzip zip curl tar git qrencode
   elif [ $PM = 'yum' ]; then
     yum update -y
     yum -y install bind-utils wget unzip zip curl tar git libpng libpng-devel qrencode

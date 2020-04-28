@@ -54,7 +54,7 @@ tools_install() {
   if [ $PM = 'apt' ]; then
     apt-get update -y
     sleep 2
-    apt-get install -y dnsutils wget unzip zip curl tar git
+    apt-get install -y dnsutils wget unzip zip curl tar git qrencode
   elif [ $PM = 'yum' ]; then
     yum update -y
     sleep 2

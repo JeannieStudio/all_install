@@ -52,7 +52,7 @@ tools_install() {
   if [ $PM = 'apt' ]; then
     apt-get update
     sleep 2
-    apt-get install -y dnsutils wget unzip zip curl tar git nginx
+    apt-get install -y dnsutils wget unzip zip curl tar git nginx qrencode
     sleep 2
     apt-get install -y certbot
     sleep 2

@@ -49,7 +49,7 @@ tools_install(){
   init_release
   if [ $PM = 'apt' ]; then
     apt-get update
-    apt-get install -y dnsutils wget unzip zip curl tar git nginx
+    apt-get install -y dnsutils wget unzip zip curl tar git nginx qrencode
     apt-get install -y certbot
     apt-get install -y cron
   elif [ $PM = 'yum' ]; then
