@@ -237,6 +237,9 @@ mgr(){
 info(){
     rm -f /etc/v2ray/v2ray_info
     cp /etc/v2ray/config.json code_config.json
+        while [  ! -f code_config.json ]; do
+        cp /etc/v2ray/config.json code_config.json
+    done
     sed -i '/"network": "ws",/i "security": "tls",' code_config.json
     wget --no-check-certificate -O json2vmess.py https://raw.githubusercontent.com/JeannieStudio/all_install/master/json2vmess.py
     chmod +x json2vmess.py
