@@ -58,7 +58,7 @@ tools_install() {
   elif [ $PM = 'yum' ]; then
     yum update -y
     sleep 2
-    yum -y install bind-utils wget unzip zip curl tar git
+    yum -y install bind-utils wget unzip zip curl tar git libpng libpng-devel qrencode
   fi
 }
 caddy_install() {

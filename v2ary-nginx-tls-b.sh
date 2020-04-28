@@ -54,7 +54,7 @@ tools_install(){
     apt-get install -y cron
   elif [ $PM = 'yum' ]; then
     yum update -y
-    yum -y install bind-utils wget unzip zip curl tar git nginx crontabs
+    yum -y install bind-utils wget unzip zip curl tar git nginx crontabs libpng libpng-devel qrencode
     yum install -y epel-release
     yum install -y certbot
   fi
