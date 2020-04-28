@@ -402,11 +402,11 @@ error_detect_depends(){
     local depend=`echo "${command}" | awk '{print $4}'`
     echo -e "[${green}Info${plain}] Starting to install package ${depend}"
     ${command} > /dev/null 2>&1
-    #if [ $? -ne 0 ]; then
-    #    echo -e "[${red}Error${plain}] Failed to install ${red}${depend}${plain}"
-    #    echo "Please visit: https://teddysun.com/486.html and contact."
-    #    exit 1
-    #fi
+    if [ $? -ne 0 ]; then
+        echo -e "[${red}Error${plain}] Failed to install ${red}${depend}${plain}"
+        echo "Please visit: https://teddysun.com/486.html and contact."
+        exit 1
+    fi
 }
 
 config_firewall(){
