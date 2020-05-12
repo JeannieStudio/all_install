@@ -785,7 +785,8 @@ ${GREEN}加密方式：  $(ssr_info_extraction '\"method\"')
 ${GREEN}协议：  $(ssr_info_extraction '\"protocol\"')
 ${GREEN}混淆：  $(ssr_info_extraction '\"obfs\"')
 ${FUCHSIA}=========================   分享链接和二维码  ===============================
-${GREEN}分享链接：${ssr_link}
+${GREEN}分享链接：
+${ssr_link}
 ${GREEN}二维码：  ${web_dir}/${uuid}.png
 ${FUCHSIA}=========================   懒人请往这儿瞧  ===============================
 ${GREEN}详细信息：https://${domain}/${uuid}.html${NO_COLOR}"
@@ -877,14 +878,16 @@ ${GREEN}https://$(v2ray_info_extraction '\"add\"')/${uuid}.html${NO_COLOR}"
 download_all_mgr() {
   curl -s -o /etc/all_mgr.sh https://raw.githubusercontent.com/JeannieStudio/all_install/master/all_mgr.sh
   curl -s -o /etc/all_mgr.sh https://raw.githubusercontent.com/JeannieStudio/all_install/master/all_mgr.sh
-  if [[ "$?" -eq 0 ]] ; then
+  if [ -s /etc/all_mgr.sh ] && grep '/bin/bash' /etc/all_mgr.sh; then
+    chmod +x /etc/all_mgr.sh
+  else
     echo -e "${RED}您的网络不给力，导致修改密码或uuid的脚本下载不下来,稍后执行以下2句命令自行下载吧："
     echo -e "curl -s -o /etc/all_mgr.sh https://raw.githubusercontent.com/JeannieStudio/all_install/master/all_mgr.sh"
     echo -e "chmod +x /etc/all_mgr.sh"
     echo -e "如果您不自行下载，将导致无法修改密码、UUID、重启caddy、nginx、trojan、ssr、v2ray，查看和延长证书有效期等，自己看着办吧……${NO_COLOR}"
     sleep 6
   fi
-  chmod +x /etc/all_mgr.sh
+
 }
 left_second(){
     seconds_left=5

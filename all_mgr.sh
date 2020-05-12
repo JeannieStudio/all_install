@@ -59,11 +59,11 @@ output_v2ray_information() {
   domain=$(v2ray_info_extraction '\"add\"')
 }
 output_ssr_information(){
-  uuid=$(ssr_qr_config_file '\"uuid\"')
-  domain=$(ssr_qr_config_file '\"domain\"')
-  shadowsockprotocol=$(ssr_qr_config_file '\"protocol\"')
-  shadowsockscipher=$(ssr_qr_config_file '\"method\"')
-  shadowsockobfs=$(ssr_qr_config_file '\"obfs\"')
+  uuid=$(ssr_qr_info_extraction '\"uuid\"')
+  domain=$(ssr_qr_info_extraction '\"domain\"')
+  shadowsockprotocol=$(ssr_qr_info_extraction '\"shadowsockprotocol\"')
+  shadowsockscipher=$(ssr_qr_info_extraction '\"shadowsockscipher\"')
+  shadowsockobfs=$(ssr_qr_info_extraction '\"shadowsockobfs\"')
 }
 remove_trojan_old_information() {
   rm -f ${web_dir}/${uuid}.html
@@ -290,10 +290,10 @@ ${GREEN}=========================ssr+tls 安装成功===========================
 ${FUCHSIA}=========================   SSR 配置信息  =============================
 ${GREEN}地址：   $(ssr_qr_info_extraction '\"domain\"')
 ${GREEN}端口：   443
-${GREEN}密码：  $(ssr_qr_info_extraction '\"password\"')
-${GREEN}加密方式：  $(ssr_qr_info_extraction '\"method\"')
-${GREEN}协议：  $(ssr_qr_info_extraction '\"protocol\"')
-${GREEN}混淆：  $(ssr_qr_info_extraction '\"obfs\"')
+${GREEN}密码：   ${password}
+${GREEN}加密方式：  $(ssr_qr_info_extraction '\"shadowsockscipher\"')
+${GREEN}协议：  $(ssr_qr_info_extraction '\"shadowsockprotocol\"')
+${GREEN}混淆：  $(ssr_qr_info_extraction '\"shadowsockobfs\"')
 ${FUCHSIA}=========================   分享链接和二维码  ===============================
 ${GREEN}分享链接：
 ${ssr_link}
