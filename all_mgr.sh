@@ -207,20 +207,19 @@ ssr_conf() {
     "protocol_param":"",
     "obfs":"tls1.2_ticket_auth",
     "obfs_param":"",
-    "redirect":["*:443#127.0.0.1:80"],
+    "redirect":["*:443#127.0.0.1:1234"],
     "dns_ipv6":false,
     "fast_open":true,
     "workers":1
 }
 EOF
 }
-
-
 ssr_qr_link_image(){
+  uuid=$(cat /proc/sys/kernel/random/uuid)
   tmp1=$(echo -n "${password}" | base64 -w0 | sed 's/=//g;s/\//_/g;s/+/-/g')
   tmp2=$(echo -n "${domain}:443:${shadowsockprotocol}:${shadowsockscipher}:${shadowsockobfs}:${tmp1}/?obfsparam=" | base64 -w0)
   ssr_link="ssr://${tmp2}"
-  qrencode -o ${web_dir}/${uuid}.png -s 8 "${code}"
+  qrencode -o ${web_dir}/${uuid}.png -s 8 "${ssr_link}"
 }
 trojan_qr_link_image() {
   uuid=$(cat /proc/sys/kernel/random/uuid)
@@ -279,7 +278,6 @@ v2ray_qr_config() {
   sed -i "6c \"id\": \"${uuid}\"," ${v2ray_win_and_android_qr_config_file}
 }
 ssr_qr_config() {
-  uuid=$(cat /proc/sys/kernel/random/uuid)
   sed -i "\"uuid\": /c \"uuid\":\"${uuid}\"," ${ssr_qr_config_file}
   sed -i "\"shadowsockspwd\": /c \"shadowsockspwd\":\"${password}\"," ${ssr_qr_config_file}
 }
@@ -393,9 +391,9 @@ change_ssr_password(){
   output_ssr_information
   remove_ssr_old_information
   ssr_conf
-  ssr_qr_config
   ssr_qr_link_image
   ssr_info_html
+  ssr_qr_config
   ssr_basic_information
 }
 mgr(){
