@@ -688,7 +688,7 @@ tls_generate() {
       read -p "$(echo -e "${Tip}您输入的邮箱正确吗?[Y/n]?")" yn
     done
     certbot certonly --standalone -n --agree-tos --email $email -d $domain
-    [[ ! -d "/etc/letsencrypt/live/$domain" ]] && echo -e "${RED}证书签发失败，原因1：域名申请次数过多，换个域名试试；2：由于网络原因，申请证书所需的依赖包没下载下来，重装即可" && exit 1
+    [[ ! -d "/etc/letsencrypt/live/$domain" ]] && echo -e "${RED}证书签发失败，原因1：域名申请次数过多，换个域名试试；2：由于网络原因，申请证书所需的依赖包没下载下来，重装即可${NO_COLOR}" && exit 1
   fi
 }
 trojan_qr_config() {
