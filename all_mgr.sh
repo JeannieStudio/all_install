@@ -61,9 +61,9 @@ output_v2ray_information() {
 output_ssr_information(){
   uuid=$(ssr_qr_info_extraction '\"uuid\"')
   domain=$(ssr_qr_info_extraction '\"domain\"')
-  shadowsockprotocol=$(ssr_qr_info_extraction '\"shadowsockprotocol\"')
-  shadowsockscipher=$(ssr_qr_info_extraction '\"shadowsockscipher\"')
-  shadowsockobfs=$(ssr_qr_info_extraction '\"shadowsockobfs\"')
+  protocol=$(ssr_qr_info_extraction '\"protocol\"')
+  method=$(ssr_qr_info_extraction '\"method\"')
+  obfs=$(ssr_qr_info_extraction '\"obfs\"')
 }
 remove_trojan_old_information() {
   rm -f ${web_dir}/${uuid}.html
@@ -217,7 +217,7 @@ EOF
 ssr_qr_link_image(){
   uuid=$(cat /proc/sys/kernel/random/uuid)
   tmp1=$(echo -n "${password}" | base64 -w0 | sed 's/=//g;s/\//_/g;s/+/-/g')
-  tmp2=$(echo -n "${domain}:443:${shadowsockprotocol}:${shadowsockscipher}:${shadowsockobfs}:${tmp1}/?obfsparam=" | base64 -w0)
+  tmp2=$(echo -n "${domain}:443:${protocol}:${method}:${obfs}:${tmp1}/?obfsparam=" | base64 -w0)
   ssr_link="ssr://${tmp2}"
   qrencode -o ${web_dir}/${uuid}.png -s 8 "${ssr_link}"
 }
@@ -278,8 +278,8 @@ v2ray_qr_config() {
   sed -i "6c \"id\": \"${uuid}\"," ${v2ray_win_and_android_qr_config_file}
 }
 ssr_qr_config() {
-  sed -i "\"uuid\": /c \"uuid\":\"${uuid}\"," ${ssr_qr_config_file}
-  sed -i "\"shadowsockspwd\": /c \"shadowsockspwd\":\"${password}\"," ${ssr_qr_config_file}
+  sed -i "2c \"uuid\":\"${uuid}\"," ${ssr_qr_config_file}
+  sed -i "4c \"password\":\"${password}\"," ${ssr_qr_config_file}
 }
 ssr_basic_information() {
   {
@@ -289,13 +289,13 @@ ${FUCHSIA}=========================   SSR 配置信息  ========================
 ${GREEN}地址：   $(ssr_qr_info_extraction '\"domain\"')
 ${GREEN}端口：   443
 ${GREEN}密码：   ${password}
-${GREEN}加密方式：  $(ssr_qr_info_extraction '\"shadowsockscipher\"')
-${GREEN}协议：  $(ssr_qr_info_extraction '\"shadowsockprotocol\"')
-${GREEN}混淆：  $(ssr_qr_info_extraction '\"shadowsockobfs\"')
+${GREEN}加密方式：  $(ssr_qr_info_extraction '\"method\"')
+${GREEN}协议：  $(ssr_qr_info_extraction '\"protocol\"')
+${GREEN}混淆：  $(ssr_qr_info_extraction '\"obfs\"')
 ${FUCHSIA}=========================   分享链接和二维码  ===============================
 ${GREEN}分享链接：
 ${ssr_link}
-${GREEN}二维码：  ${web_dir}/${uuid}-01.png
+${GREEN}二维码：  ${web_dir}/${uuid}.png
 ${FUCHSIA}=========================   懒人请往这儿瞧  ===============================
 ${GREEN}详细信息：https://${domain}/${uuid}.html${NO_COLOR}"
 } | tee /etc/motd

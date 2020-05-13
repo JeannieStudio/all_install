@@ -741,10 +741,10 @@ ssr_qr_config() {
 {
   "uuid":"${uuid}",
   "domain":"${domain}",
-  "shadowsockspwd": "$(ssr_info_extraction '\"password\"')",
-  "shadowsockprotocol": "$(ssr_info_extraction '\"protocol\"')",
-  "shadowsockscipher": "$(ssr_info_extraction '\"method\"')",
-  "shadowsockobfs": "$(ssr_info_extraction '\"obfs\"')",
+  "password": "$(ssr_info_extraction '\"password\"')",
+  "protocol": "$(ssr_info_extraction '\"protocol\"')",
+  "method": "$(ssr_info_extraction '\"method\"')",
+  "obfs": "$(ssr_info_extraction '\"obfs\"')",
 }
 EOF
 }
@@ -755,12 +755,12 @@ ssr_qr_info_extraction() {
   grep "$1" ${ssr_qr_config_file} | awk -F '"' '{print $4}'
 }
 ssr_qr_link_image(){
-    shadowsockspwd=$(ssr_info_extraction '\"password\"')
-    shadowsockprotocol=$(ssr_info_extraction '\"protocol\"')
-    shadowsockscipher=$(ssr_info_extraction '\"method\"')
-    shadowsockobfs=$(ssr_info_extraction '\"obfs\"')
-    tmp1=$(echo -n "${shadowsockspwd}" | base64 -w0 | sed 's/=//g;s/\//_/g;s/+/-/g')
-    tmp2=$(echo -n "${domain}:443:${shadowsockprotocol}:${shadowsockscipher}:${shadowsockobfs}:${tmp1}/?obfsparam=" | base64 -w0)
+    password=$(ssr_info_extraction '\"password\"')
+    protocol=$(ssr_info_extraction '\"protocol\"')
+    method=$(ssr_info_extraction '\"method\"')
+    obfs=$(ssr_info_extraction '\"obfs\"')
+    tmp1=$(echo -n "${password}" | base64 -w0 | sed 's/=//g;s/\//_/g;s/+/-/g')
+    tmp2=$(echo -n "${domain}:443:${protocol}:${method}:${obfs}:${tmp1}/?obfsparam=" | base64 -w0)
     ssr_link="ssr://${tmp2}"
     qrencode -o ${web_dir}/${uuid}.png -s 8 "${ssr_link}"
 }
