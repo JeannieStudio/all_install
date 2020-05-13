@@ -219,7 +219,10 @@ install_dependency() {
     echo -e "${Info}开始升级系统，需要花费几分钟……"
     yum update -y
     echo -e "${Info}开始安装依赖……"
-    yum -y install bind-utils epel-release wget unzip zip curl tar git crontabs libpng libpng-devel qrencode certbot firewalld
+    yum -y install bind-utils wget unzip zip curl tar git crontabs libpng libpng-devel qrencode firewalld
+    yum install -y epel-release
+    sleep 3
+    yum install -y certbot
   else
     echo -e "${Info}开始升级系统，需要花费几分钟……"
     apt-get update -y
