@@ -227,7 +227,9 @@ install_dependency() {
     echo -e "${Info}开始升级系统，需要花费几分钟……"
     apt-get update -y
     echo -e "${Info}开始安装依赖……"
-    apt-get install -y dnsutils wget unzip zip curl tar git qrencode cron certbot firewalld ufw
+    apt-get install -y dnsutils wget unzip zip curl tar git qrencode cron firewalld ufw
+    sleep 2
+    apt-get install -y certbot
   fi
   ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 }
@@ -704,6 +706,14 @@ trojan_qr_link_image() {
   trojan_link2="trojan://${password2}@${domain}:443"
   qrencode -o ${web_dir}/${uuid}-01.png -s 6 "${trojan_link1}"
   qrencode -o ${web_dir}/${uuid}-02.png -s 6 "${trojan_link2}"
+  #tmp1=$(echo -n "${password1}" | base64 -w0 | sed 's/=//g;s/\//_/g;s/+/-/g')
+  #tmp2=$(echo -n "${tmp1}@${domain}:443" | base64 -w0)
+  #trojan_link1="trojan://${tmp2}"
+  #tmp3=$(echo -n "${password2}" | base64 -w0 | sed 's/=//g;s/\//_/g;s/+/-/g')
+  #tmp4=$(echo -n "${tmp3}@${domain}:443" | base64 -w0)
+  #trojan_link2="trojan://${tmp4}"
+  #qrencode -o ${web_dir}/${uuid}-01.png -s 6 "${trojan_link1}"
+  #qrencode -o ${web_dir}/${uuid}-02.png -s 6 "${trojan_link2}"
 }
 trojan_info_html() {
   vps="trojan"
