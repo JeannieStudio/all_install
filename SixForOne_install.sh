@@ -227,7 +227,7 @@ install_dependency() {
     echo -e "${Info}开始升级系统，需要花费几分钟……"
     apt-get update -y
     echo -e "${Info}开始安装依赖……"
-    apt-get install -y dnsutils wget unzip zip curl tar git qrencode cron firewalld
+    apt-get install -y dnsutils wget unzip zip curl tar git qrencode cron
     sleep 2
     apt-get install -y certbot
   fi
