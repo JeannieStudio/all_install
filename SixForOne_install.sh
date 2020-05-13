@@ -227,19 +227,15 @@ install_dependency() {
     echo -e "${Info}开始升级系统，需要花费几分钟……"
     apt-get update -y
     echo -e "${Info}开始安装依赖……"
-    apt-get install -y dnsutils wget unzip zip curl tar git qrencode cron firewalld ufw
+    apt-get install -y dnsutils wget unzip zip curl tar git qrencode cron firewalld
     sleep 2
     apt-get install -y certbot
   fi
   ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 }
 close_firewall() {
-  if [[ ${release} == "centos" ]]; then
-    systemctl stop firewalld.service
-    systemctl disable firewalld.service
-  else
-    ufw disable
-  fi
+  systemctl stop firewalld.service
+  systemctl disable firewalld.service
 }
 install_nginx() {
   if [[ ${nginx_install_flag} = "YES" ]]; then
