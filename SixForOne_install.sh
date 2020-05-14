@@ -231,7 +231,7 @@ install_dependency() {
     echo -e "${Info}开始升级系统，需要花费几分钟……"
     yum update -y
     echo -e "${Info}开始安装依赖……"
-    yum -y install bind-utils wget unzip zip curl tar git crontabs libpng libpng-devel qrencode firewalld chrony
+    yum -y install bind-utils wget unzip zip curl tar git crontabs libpng libpng-devel qrencode chrony
     yum install -y epel-release
     sleep 3
     yum install -y certbot
@@ -239,7 +239,7 @@ install_dependency() {
     echo -e "${Info}开始升级系统，需要花费几分钟……"
     apt-get update -y
     echo -e "${Info}开始安装依赖……"
-    apt-get install -y dnsutils wget unzip zip curl tar git qrencode cron firewalld chrony
+    apt-get install -y dnsutils wget unzip zip curl tar git qrencode cron chrony
     sleep 2
     apt-get install -y certbot
   fi
@@ -935,17 +935,10 @@ ${GREEN}https://$(v2ray_info_extraction '\"add\"')/${uuid}.html${NO_COLOR}"
 }
 download_all_mgr() {
   curl -s -o /etc/all_mgr.sh https://raw.githubusercontent.com/JeannieStudio/all_install/master/all_mgr.sh
-  curl -s -o /etc/all_mgr.sh https://raw.githubusercontent.com/JeannieStudio/all_install/master/all_mgr.sh
-  if [ -s /etc/all_mgr.sh ] && grep '/bin/bash' /etc/all_mgr.sh; then
-    chmod +x /etc/all_mgr.sh
-  else
-    echo -e "${RED}您的网络不给力，导致修改密码或uuid的脚本下载不下来,稍后执行以下2句命令自行下载吧："
-    echo -e "curl -s -o /etc/all_mgr.sh https://raw.githubusercontent.com/JeannieStudio/all_install/master/all_mgr.sh"
-    echo -e "chmod +x /etc/all_mgr.sh"
-    echo -e "如果您不自行下载，将导致无法修改密码、UUID、重启caddy、nginx、trojan、ssr、v2ray，查看和延长证书有效期等，自己看着办吧……${NO_COLOR}"
-    sleep 6
-  fi
-
+  while [ $? -ne 0 ]; do
+    curl -s -o /etc/all_mgr.sh https://raw.githubusercontent.com/JeannieStudio/all_install/master/all_mgr.sh
+  done
+  chmod +x /etc/all_mgr.sh
 }
 left_second(){
     seconds_left=5
@@ -967,7 +960,7 @@ install_trojan_nginx() {
   check_root
   check_sys
   install_dependency
-  close_firewall
+  #close_firewall
   check_caddy_installed_status
   uninstall_caddy
   check_v2ray_installed_status
@@ -1003,7 +996,7 @@ install_trojan_caddy() {
   check_root
   check_sys
   install_dependency
-  close_firewall
+  #close_firewall
   check_nginx_installed_status
   uninstall_nginx
   check_v2ray_installed_status
@@ -1039,7 +1032,7 @@ install_v2ray_nginx() {
   check_root
   check_sys
   install_dependency
-  close_firewall
+  #close_firewall
   check_caddy_installed_status
   uninstall_caddy
   check_trojan_installed_status
@@ -1078,7 +1071,7 @@ install_v2ray_caddy() {
   check_root
   check_sys
   install_dependency
-  close_firewall
+  #close_firewall
   check_nginx_installed_status
   uninstall_nginx
   check_trojan_installed_status
@@ -1117,7 +1110,7 @@ install_ssr_caddy() {
   check_root
   check_sys
   install_dependency
-  close_firewall
+  #close_firewall
   check_nginx_installed_status
   uninstall_nginx
   check_v2ray_installed_status
