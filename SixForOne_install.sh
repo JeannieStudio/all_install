@@ -208,7 +208,7 @@ remove_mgr(){
   [[ -f "/etc/all_mgr.sh" ]] && rm -f /etc/all_mgr.sh
 }
 install_v2ray() {
-  if [[ ${trojan_install_flag} == "YES" ]]; then
+  if [[ ${v2ray_install_flag} == "YES" ]]; then
     echo -e "${Info}开始安装v2ray……"
     bash <(curl -L -s https://install.direct/go.sh)
   fi
