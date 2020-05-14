@@ -115,6 +115,18 @@ check_domain() {
   while [ "${real_ip}" != "${local_ip}" ]; do
     read -p "本机IP和域名绑定的IP不一致，请检查域名是否解析成功,并重新输入域名:" domain
     real_ip=$(ping ${domain} -c 1 | sed '1{s/[^(]*(//;s/).*//;q}')
+    read -p "我已人工确认，本机Ip和域名绑定的IP一致，继续安装（Y/n）？（默认:n）" continue_install
+    [[ -z ${continue_install} ]] && continue_install="n"
+    case ${continue_install} in
+    [yY][eE][sS] | [yY])
+        echo -e "${Tip} 继续安装"
+        break
+        ;;
+    *)
+        echo -e "${Tip} 安装终止"
+        exit 2
+        ;;
+    esac
   done
 }
 check_nginx_installed_status() {
