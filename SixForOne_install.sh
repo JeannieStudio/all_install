@@ -956,7 +956,6 @@ install_trojan_nginx() {
   check_sys
   install_dependency
   close_firewall
-  open_port
   check_caddy_installed_status
   uninstall_caddy
   check_v2ray_installed_status
@@ -993,7 +992,6 @@ install_trojan_caddy() {
   check_sys
   install_dependency
   close_firewall
-  open_port
   check_nginx_installed_status
   uninstall_nginx
   check_v2ray_installed_status
@@ -1030,7 +1028,6 @@ install_v2ray_nginx() {
   check_sys
   install_dependency
   close_firewall
-  open_port
   check_caddy_installed_status
   uninstall_caddy
   check_trojan_installed_status
@@ -1070,7 +1067,6 @@ install_v2ray_caddy() {
   check_sys
   install_dependency
   close_firewall
-  open_port
   check_nginx_installed_status
   uninstall_nginx
   check_trojan_installed_status
@@ -1110,7 +1106,6 @@ install_ssr_caddy() {
   check_sys
   install_dependency
   close_firewall
-  open_port
   check_nginx_installed_status
   uninstall_nginx
   check_v2ray_installed_status
