@@ -221,6 +221,17 @@ remove_mgr(){
 }
 install_v2ray() {
   if [[ ${v2ray_install_flag} == "YES" ]]; then
+     read -p "$(echo -e "${Tip}是否重新安装（Y/n）?(默认：n)")" Yn
+    [[ -z ${Yn} ]] && Yn="n"
+    while [[ ${Yn} != "Y" ]] && [[ ${Yn} != "y" ]] && [[ ${Yn} != "n" ]]; do
+        read -p "$(echo -e "${Tip}输入错误，重新输入：(默认：n)")" Yn
+        [[ -z ${Yn} ]] && Yn="n"
+    done
+    if [[ ${Yn} == "Y" ]] || [[ ${Yn} == "y" ]]; then
+      echo -e "${Info}v2ray……"
+      bash <(curl -L -s https://install.direct/go.sh)
+    fi
+  else
     echo -e "${Info}开始安装v2ray……"
     bash <(curl -L -s https://install.direct/go.sh)
   fi
