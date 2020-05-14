@@ -208,7 +208,7 @@ remove_mgr(){
   [[ -f "/etc/all_mgr.sh" ]] && rm -f /etc/all_mgr.sh
 }
 install_v2ray() {
-  if [[ ${trojan_install_flag} == "YES" ]]; then
+  if [[ ${v2ray_install_flag} == "YES" ]]; then
     echo -e "${Info}开始安装v2ray……"
     bash <(curl -L -s https://install.direct/go.sh)
   fi
@@ -219,7 +219,7 @@ install_dependency() {
     echo -e "${Info}开始升级系统，需要花费几分钟……"
     yum update -y
     echo -e "${Info}开始安装依赖……"
-    yum -y install bind-utils wget unzip zip curl tar git crontabs libpng libpng-devel qrencode firewalld
+    yum -y install bind-utils wget unzip zip curl tar git crontabs libpng libpng-devel qrencode firewalld chrony
     yum install -y epel-release
     sleep 3
     yum install -y certbot
@@ -227,15 +227,52 @@ install_dependency() {
     echo -e "${Info}开始升级系统，需要花费几分钟……"
     apt-get update -y
     echo -e "${Info}开始安装依赖……"
-    apt-get install -y dnsutils wget unzip zip curl tar git qrencode cron
+    apt-get install -y dnsutils wget unzip zip curl tar git qrencode cron firewalld chrony
     sleep 2
     apt-get install -y certbot
   fi
   ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 }
+chrony_install() {
+    echo -e "${Info}安装 chrony 时间同步服务 "
+    timedatectl set-ntp true
+    if [[ ${release} == "centos" ]]; then
+        systemctl enable chronyd && systemctl restart chronyd
+      else
+        systemctl enable chrony && systemctl restart chrony
+     fi
+    echo -e "${Info}chronyd 启动 "
+    timedatectl set-timezone Asia/Shanghai
+    echo -e "${Info}等待时间同步"
+    sleep 10
+    chronyc sourcestats -v
+    chronyc tracking -v
+    date
+    read -p "请确认时间是否准确,误差范围±3分钟(Y/N): " chrony_install
+    [[ -z ${chrony_install} ]] && chrony_install="Y"
+    case $chrony_install in
+    [yY][eE][sS] | [yY])
+        echo -e "${GreenBG} 继续安装 ${Font}"
+        sleep 2
+        ;;
+    *)
+        echo -e "${RedBG} 安装终止 ${Font}"
+        exit 2
+        ;;
+    esac
+}
 close_firewall() {
   systemctl stop firewalld.service
   systemctl disable firewalld.service
+  echo -e "${Info} firewalld 已关闭 ${Font}"
+}
+open_port() {
+  if [[ ${release} != "centos" ]]; then
+    iptables -I INPUT -m state --state NEW -m tcp -p tcp --dport 80 -j ACCEPT
+    iptables -I INPUT -m state --state NEW -m udp -p udp --dport 80 -j ACCEPT
+    ip6tables -I INPUT -m state --state NEW -m tcp -p tcp --dport 80 -j ACCEPT
+    ip6tables -I INPUT -m state --state NEW -m udp -p udp --dport 80 -j ACCEPT
+	fi
 }
 install_nginx() {
   if [[ ${nginx_install_flag} = "YES" ]]; then
