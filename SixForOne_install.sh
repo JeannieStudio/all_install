@@ -451,15 +451,15 @@ tls_type() {
     done
     case $tls_version in
     1)
-      sed -i 's/ssl_protocols.*/ssl_protocols         TLSv1.1 TLSv1.2 TLSv1.3;/' ${nginx_conf}
+      sed -i 's/ssl_protocols.*/ssl_protocols         TLSv1.1 TLSv1.2;/' ${nginx_conf}
       echo -e "${OK} ${GreenBG} 已切换至 TLS1.1 TLS1.2 and TLS1.3 ${Font}"
       ;;
     2)
-      sed -i 's/ssl_protocols.*/ssl_protocols         TLSv1.2 TLSv1.3;/' ${nginx_conf}
+      sed -i 's/ssl_protocols.*/ssl_protocols         TLSv1.2;/' ${nginx_conf}
       echo -e "${OK} ${GreenBG} 已切换至 TLS1.2 and TLS1.3 ${Font}"
       ;;
     3)
-      sed -i 's/ssl_protocols.*/ssl_protocols         TLSv1.3;/' ${nginx_conf}
+      sed -i 's/ssl_protocols.*/ssl_protocols         TLSv1.2;/' ${nginx_conf}
       echo -e "${OK} ${GreenBG} 已切换至 TLS1.3 only ${Font}"
       ;;
     *)
