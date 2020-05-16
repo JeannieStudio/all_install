@@ -19,6 +19,7 @@ nginx_conf="${nginx_conf_dir}/default.conf"
 nginx_dir="/etc/nginx"
 v2ray_bin_dir="/usr/bin/v2ray"
 v2ray_systemd_file="/etc/systemd/system/v2ray.service"
+nginx_bin_file_new="/etc/nginx/sbin/nginx"
 v2ray_conf_dir="/etc/v2ray"
 v2ray_conf="${v2ray_conf_dir}/config.json"
 v2ray_shadowrocket_qr_config_file="${v2ray_conf_dir}/shadowrocket_qrconfig.json"
@@ -359,7 +360,7 @@ count_days(){
   [[ -f ${trojan_qr_config_file} ]] && trojan_info_extraction && output_trojan_information
   [[ -f ${v2ray_shadowrocket_qr_config_file} ]] && v2ray_info_extraction && output_v2ray_information
   [[ -f ${ssr_qr_config_file} ]] && ssr_qr_info_extraction && output_ssr_information
-  end_time=$(echo | openssl s_client -servername $domain -connect $domain:443 2>/dev/null | openssl x509 -noout -dates |grep 'After'| awk -F '=' '{print $2}'| awk -F ' +' '{print $1,$2,$4 }' )
+  end_time=$(echo | openssl s_client -servername $domain -connect $domain:443 2>/dev/null | openssl x509 -in /data/$domain/fullchain.crt -noout -dates |grep 'After'| awk -F '=' '{print $2}'| awk -F ' +' '{print $1,$2,$4 }' )
   end_times=$(date +%s -d "$end_time")
   now_time=$(date +%s -d "$(date | awk -F ' +'  '{print $2,$3,$6}')")
   RST=$(($((end_times-now_time))/(60*60*24)))
@@ -398,7 +399,7 @@ change_ssr_password(){
 }
 mgr(){
   check_root
-  if [[ -e "${nginx_bin_file}" ]] && [[ -e "${trojan_bin_dir}" ]]; then
+  if [[ -e "${nginx_bin_file_new}" ]] && [[ -e "${trojan_bin_dir}" ]]; then
       echo -e "
       $FUCHSIA=======================================================
       ${GREEN}系统检测到您目前安装的是trojan+nginx+tls一键脚本
@@ -438,7 +439,7 @@ mgr(){
             exit
           ;;
       esac
-  elif [ -e "${caddy_bin_dir}/caddy" -a -e "${trojan_bin_dir}" ]; then
+  elif [[ -e "${caddy_bin_dir}/caddy" ]] && [[ -e "${trojan_bin_dir}" ]]; then
       echo -e "
       $FUCHSIA=========================================================
       ${GREEN}系统检测到您目前安装的是trojan+caddy+tls一键脚本
@@ -478,7 +479,7 @@ mgr(){
             exit
           ;;
       esac
-  elif [ -e "${nginx_bin_file}" -a -e "${v2ray_bin_dir}/v2ray" ]; then
+  elif [[ -e "${nginx_bin_file_new}" ]] && [[ -e "${v2ray_bin_dir}/v2ray" ]]; then
        echo -e "
       $FUCHSIA=======================================================
       ${GREEN}系统检测到您目前安装的是v2ray+nginx+tls一键脚本
@@ -518,7 +519,7 @@ mgr(){
             exit
           ;;
       esac
-  elif [ -e "${caddy_bin_dir}/caddy" -a -e "${v2ray_bin_dir}/v2ray" ]; then
+  elif [[ -e "${caddy_bin_dir}/caddy" ]] && [[ -e "${v2ray_bin_dir}/v2ray" ]]; then
       echo -e "
       $FUCHSIA=======================================================
       ${GREEN}系统检测到您目前安装的是v2ray+caddy+tls一键脚本
@@ -559,7 +560,7 @@ mgr(){
           ;;
       esac
 
-  elif [ -e "${caddy_bin_dir}/caddy" -a -d "${ssr_bin_dir}" ]; then
+  elif [[ -e "${caddy_bin_dir}/caddy" ]] && [[ -d "${ssr_bin_dir}" ]]; then
       echo -e "
       $FUCHSIA===================================================
       ${GREEN}系统检测到您目前安装的是ssr+caddy+tls一键脚本

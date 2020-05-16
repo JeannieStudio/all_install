@@ -23,9 +23,12 @@ Info="${Green_font_prefix}[信息]${Font_color_suffix}"
 Error="${Red_font_prefix}[错误]${Font_color_suffix}"
 Tip="${Green_font_prefix}[注意]${Font_color_suffix}"
 nginx_bin_file="/usr/sbin/nginx"
-nginx_conf_dir="/etc/nginx/conf.d"
+nginx_bin_file_new="/etc/nginx/sbin/nginx"
+nginx_conf_dir="/etc/nginx/conf/conf.d"
 nginx_conf="${nginx_conf_dir}/default.conf"
 nginx_dir="/etc/nginx"
+nginx_openssl_src="/usr/local/src"
+nginx_systemd_file="/etc/systemd/system/nginx.service"
 v2ray_bin_dir="/usr/bin/v2ray"
 v2ray_systemd_file="/etc/systemd/system/v2ray.service"
 v2ray_conf_dir="/etc/v2ray"
@@ -47,17 +50,29 @@ ssr_qr_config_file="${ssr_conf_dir}/qrconfig.json"
 ssr_systemd_file="/etc/init.d/shadowsocks-r"
 ssr_bin_dir="/usr/local/shadowsocks"
 web_dir="/usr/wwwroot"
+nginx_version="1.18.0"
+openssl_version="1.1.1g"
+jemalloc_version="5.2.1"
+old_config_status="off"
+# v2ray_plugin_version="$(wget -qO- "https://github.com/shadowsocks/v2ray-plugin/tags" | grep -E "/shadowsocks/v2ray-plugin/releases/tag/"
 set_SELINUX() {
   if [ -s /etc/selinux/config ] && grep 'SELINUX=enforcing' /etc/selinux/config; then
     sed -i 's/SELINUX=enforcing/SELINUX=disabled/g' /etc/selinux/config
     setenforce 0
   fi
 }
+sys_cmd(){
+  if [[ ${release} == "centos" ]]; then
+    cmd="yum"
+  else
+    cmd="apt"
+  fi
+}
 set_PATH() {
   [[ -z "$(grep "export PATH=/bin:/sbin:" /etc/bashrc)" ]] && echo "export PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin" >>/etc/bashrc && source /etc/profile
 }
 check_root() {
-  [[ $EUID != 0 ]] && echo -e "${Error} 当前非ROOT账号(或没有ROOT权限)，无法继续操作，请执行命令 ${Green_background_prefix}sudo -i${Font_color_suffix} 更换ROOT账号" && exit 1
+  [[ $EUID != 0 ]] && echo -e "${Error} ${RedBG} 当前非ROOT账号(或没有ROOT权限)，无法继续操作，请执行命令 ${Green_background_prefix}sudo -i${Font_color_suffix} 更换ROOT账号" && exit 1
 }
 check_nginx_pid() {
   PID=$(ps -ef | grep "nginx" | grep -v "grep" | grep -v "init.d" | grep -v "service" | awk '{print $2}')
@@ -97,7 +112,15 @@ check_sys() {
   fi
   #bit=`uname -m`
 }
-
+sucess_or_fail() {
+    if [[ 0 -eq $? ]]; then
+        echo -e "${Info} ${GreenBG} $1 完成 ${Font}"
+        sleep 1
+    else
+        echo -e "${Error} ${GreenBG}$1 失败${Font}"
+        exit 1
+    fi
+}
 get_ip() {
   local_ip=$(curl -s https://ipinfo.io/ip)
   [[ -z ${local_ip} ]] && ${local_ip}=$(curl -s https://api.ip.sb/ip)
@@ -130,7 +153,7 @@ check_domain() {
   done
 }
 check_nginx_installed_status() {
-  if [[ -f ${nginx_bin_file} ]] && [[ -d ${nginx_dir} ]] && [[ -f ${nginx_conf} ]]; then
+  if [[ -f ${nginx_bin_file_new} ]]; then
     echo -e "${Info}检测到您已经安装了Nginx!"
     nginx_install_flag="YES"
   fi
@@ -160,9 +183,9 @@ check_caddy_installed_status() {
   fi
 }
 uninstall_nginx() {
-  if [[ -f ${nginx_bin_file} ]] || [[ -d ${nginx_dir} ]] || [[ -f ${nginx_conf} ]]; then
+  if [[ -f ${nginx_bin_file} ]]; then
     nginx -s stop
-    echo -e "${Info}开始卸载Nginx……"
+    echo -e "${Info}检测到您安装了旧版Nginx，马上为您卸载旧版……"
     if [[ ${release} == "centos" ]]; then
       yum autoremove -y nginx
       rm -rf ${nginx_dir}
@@ -170,8 +193,21 @@ uninstall_nginx() {
       apt-get autoremove -y --purge nginx # 自动删除安装nginx时安装的依赖包和/etc/nginx
       rm -rf ${nginx_dir}
     fi
-    echo -e "${Info}Nginx卸载成功！"
+    echo -e "${Info}旧版Nginx卸载成功！"
   fi
+}
+uninstall_new_nginx() {
+  if [[ -f ${nginx_bin_file_new} ]]; then
+        echo -e "${Tip} 是否卸载 Nginx [Y/N]? "
+        read -r uninstall_nginx
+        case ${uninstall_nginx} in
+        [yY][eE][sS] | [yY])
+            rm -rf ${nginx_dir}
+            echo -e "${Info} 已卸载 Nginx ${Font}"
+            ;;
+        *) ;;
+        esac
+    fi
 }
 uninstall_v2ray() {
   if [[ -d ${v2ray_bin_dir} ]] || [[ -f ${v2ray_systemd_file} ]] || [[ -d ${v2ray_conf_dir} ]]; then
@@ -185,7 +221,7 @@ uninstall_v2ray() {
 uninstall_caddy() {
   if [[ -f ${caddy_bin_dir}/caddy ]] || [[ -f ${caddy_systemd_file} ]] || [[ -d ${caddy_conf_dir} ]] || [[ -f ${caddy_bin_dir}/caddy_old ]]; then
     echo -e "${Info}开始卸载Caddy……"
-    [[ -f ${caddy_bin_dir}/caddy ]] && caddy -service stop && rm -f ${caddy_bin_dir}/caddy
+    [[ -f ${caddy_bin_dir}/caddy ]] && rm -f ${caddy_bin_dir}/caddy
     [[ -f ${caddy_bin_dir}/caddy_old ]] && rm -f ${caddy_bin_dir}/caddy_old
     [[ -d ${caddy_conf_dir} ]] && rm -rf ${caddy_conf_dir}
     [[ -f ${caddy_systemd_file} ]] && rm -f ${caddy_systemd_file}
@@ -219,40 +255,92 @@ uninstall_ssr() {
 remove_mgr(){
   [[ -f "/etc/all_mgr.sh" ]] && rm -f /etc/all_mgr.sh
 }
+port_used_check() {
+    if [[ 0 -eq $(lsof -i:"$1" | grep -i -c "listen") ]]; then
+        echo -e "${Info} $1 端口未被占用"
+        sleep 1
+    else
+        echo -e "${Error}检测到 $1 端口被占用，以下为 $1 端口占用信息 ${Font}"
+        lsof -i:"$1"
+        echo -e "${Info} 5s 后将尝试自动 kill 占用进程 "
+        sleep 5
+        lsof -i:"$1" | awk '{print $2}' | grep -v "PID" | xargs kill -9
+        echo -e "${Info} kill 完成"
+        sleep 1
+    fi
+}
 install_v2ray() {
   if [[ ${v2ray_install_flag} == "YES" ]]; then
-     read -p "$(echo -e "${Tip}是否重新安装（Y/n）?(默认：n)")" Yn
+    read -p "$(echo -e "${Tip}检测到已经安装了v2ray,是否重新安装（Y/n）?(默认：n)")" Yn
     [[ -z ${Yn} ]] && Yn="n"
-    while [[ ${Yn} != "Y" ]] && [[ ${Yn} != "y" ]] && [[ ${Yn} != "n" ]]; do
-        read -p "$(echo -e "${Tip}输入错误，重新输入：(默认：n)")" Yn
-        [[ -z ${Yn} ]] && Yn="n"
-    done
-    if [[ ${Yn} == "Y" ]] || [[ ${Yn} == "y" ]]; then
-      echo -e "${Info}v2ray……"
-      bash <(curl -L -s https://install.direct/go.sh)
-    fi
+    case ${Yn} in
+    [yY][eE][sS] | [yY])
+        echo -e "${Info}开始安装v2ray……"
+        sleep 2
+        bash <(curl -L -s https://install.direct/go.sh)
+        ;;
+    *)
+        ;;
+    esac
   else
     echo -e "${Info}开始安装v2ray……"
+    sleep 2
     bash <(curl -L -s https://install.direct/go.sh)
   fi
 }
 
 install_dependency() {
-  if [[ ${release} == "centos" ]]; then
-    echo -e "${Info}开始升级系统，需要花费几分钟……"
-    yum update -y
-    echo -e "${Info}开始安装依赖……"
-    yum -y install bind-utils wget unzip zip curl tar git crontabs libpng libpng-devel qrencode chrony
-    yum install -y epel-release
-    sleep 3
-    yum install -y certbot
+  echo -e "${Info}开始升级系统，需要花费几分钟……"
+  ${cmd} update -y
+  sucess_or_fail "系统升级"
+  echo -e "${Info}开始安装依赖……"
+  if [[ ${cmd} == "apt" ]]; then
+    apt -y install dnsutils
   else
-    echo -e "${Info}开始升级系统，需要花费几分钟……"
-    apt-get update -y
-    echo -e "${Info}开始安装依赖……"
-    apt-get install -y dnsutils wget unzip zip curl tar git qrencode cron chrony
-    sleep 2
-    apt-get install -y certbot
+    yum -y install bind-utils
+  fi
+  sucess_or_fail "DNS工具包安装"
+  ${cmd} -y install wget
+  sucess_or_fail "wget包安装"
+  ${cmd} -y install unzip
+  sucess_or_fail "unzip安装"
+  ${cmd} -y install zip
+  sucess_or_fail "zip安装"
+  ${cmd} -y install curl
+  sucess_or_fail "curl安装"
+  ${cmd} -y install tar
+  sucess_or_fail "tar安装"
+  ${cmd} -y install git
+  sucess_or_fail "git安装"
+  ${cmd} -y install lsof
+  sucess_or_fail "lsof安装"
+  ${cmd} -y install firewalld
+  sucess_or_fail "firewalld安装"
+  if [[ ${cmd} == "yum" ]]; then
+    yum -y install crontabs
+  else
+    apt -y install cron
+  fi
+  sucess_or_fail "定时任务工具安装"
+  ${cmd} -y install qrencode
+  sucess_or_fail "qrencode安装"
+  ${cmd} -y install bzip2
+  sucess_or_fail "bzip2安装"
+  if [[ ${cmd} == "yum" ]]; then
+    yum install -y epel-release
+  fi
+  sucess_or_fail "epel-release安装"
+  if [[ "${cmd}" == "yum" ]]; then
+        ${cmd} -y groupinstall "Development tools"
+    else
+        ${cmd} -y install build-essential
+  fi
+  sucess_or_fail "编译工具包 安装"
+
+  if [[ "${cmd}" == "yum" ]]; then
+      ${cmd} -y install pcre pcre-devel zlib-devel epel-release
+  else
+      ${cmd} -y install libpcre3 libpcre3-dev zlib1g-dev dbus
   fi
   ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 }
@@ -298,46 +386,115 @@ open_port() {
 	fi
 }
 install_nginx() {
-  if [[ ${nginx_install_flag} = "YES" ]]; then
-    read -p "$(echo -e "${Tip}是否重新安装（Y/n）?(默认：n)")" Yn
-    [[ -z ${Yn} ]] && Yn="n"
-    while [[ ${Yn} != "Y" ]] && [[ ${Yn} != "y" ]] && [[ ${Yn} != "n" ]]; do
-        read -p "$(echo -e "${Tip}输入错误，重新输入：(默认：n)")" Yn
-        [[ -z ${Yn} ]] && Yn="n"
-    done
-    if [[ ${Yn} == "Y" ]] || [[ ${Yn} == "y" ]]; then
-      if [[ ${release} == "centos" ]]; then
-        echo -e "${Info}开始安装Nginx……"
-        yum -y install nginx
-      else
-        echo -e "${Info}开始安装Nginx……"
-        apt-get -y install nginx
-      fi
-    fi
+  if [[ ${nginx_install_flag} == "YES" ]]; then
+     echo -e "${Info} Nginx已存在，跳过编译安装过程 ${Font}"
+     sleep 2
   else
-    echo -e "${Info}开始安装Nginx……"
-    if [[ ${release} == "centos" ]]; then
-      yum -y install nginx
-    else
-      apt-get -y install nginx
-    fi
-  fi
+    wget -nc --no-check-certificate http://nginx.org/download/nginx-${nginx_version}.tar.gz -P ${nginx_openssl_src}
+    sucess_or_fail "Nginx 下载"
+    wget -nc --no-check-certificate https://www.openssl.org/source/openssl-${openssl_version}.tar.gz -P ${nginx_openssl_src}
+    sucess_or_fail "openssl 下载"
+    wget -nc --no-check-certificate https://github.com/jemalloc/jemalloc/releases/download/${jemalloc_version}/jemalloc-${jemalloc_version}.tar.bz2 -P ${nginx_openssl_src}
+    sucess_or_fail "jemalloc 下载"
+    cd ${nginx_openssl_src} || exit
+
+    [[ -d nginx-"$nginx_version" ]] && rm -rf nginx-"$nginx_version"
+    tar -zxvf nginx-"$nginx_version".tar.gz
+
+    [[ -d openssl-"$openssl_version" ]] && rm -rf openssl-"$openssl_version"
+    tar -zxvf openssl-"$openssl_version".tar.gz
+
+    [[ -d jemalloc-"${jemalloc_version}" ]] && rm -rf jemalloc-"${jemalloc_version}"
+    tar -xvf jemalloc-"${jemalloc_version}".tar.bz2
+
+    [[ -d "$nginx_dir" ]] && rm -rf ${nginx_dir}
+
+    echo -e "${Info} 开始编译并安装 jemalloc……"
+    sleep 2
+
+    cd jemalloc-${jemalloc_version} || exit
+    ./configure
+    sucess_or_fail "编译检查……"
+    make && make install
+    sucess_or_fail "jemalloc 编译安装"
+    echo '/usr/local/lib' >/etc/ld.so.conf.d/local.conf
+    ldconfig
+
+    echo -e "${Info} 即将开始编译安装 Nginx, 过程稍久，请耐心等待……"
+    sleep 4
+
+    cd ../nginx-${nginx_version} || exit
+
+    ./configure --prefix="${nginx_dir}" \
+        --with-http_ssl_module \
+        --with-http_gzip_static_module \
+        --with-http_stub_status_module \
+        --with-pcre \
+        --with-http_realip_module \
+        --with-http_flv_module \
+        --with-http_mp4_module \
+        --with-http_secure_link_module \
+        --with-http_v2_module \
+        --with-cc-opt='-O3' \
+        --with-ld-opt="-ljemalloc" \
+        --with-openssl=../openssl-"$openssl_version"
+    sucess_or_fail "编译检查"
+    make && make install
+    sucess_or_fail "Nginx 编译安装"
+
+    # 修改基本配置
+    sed -i 's/#user  nobody;/user  root;/' ${nginx_dir}/conf/nginx.conf
+    sed -i 's/worker_processes  1;/worker_processes  3;/' ${nginx_dir}/conf/nginx.conf
+    sed -i 's/    worker_connections  1024;/    worker_connections  4096;/' ${nginx_dir}/conf/nginx.conf
+    sed -i '$i include conf.d/*.conf;' ${nginx_dir}/conf/nginx.conf
+
+    # 删除临时文件
+    rm -rf ../nginx-"${nginx_version}"
+    rm -rf ../openssl-"${openssl_version}"
+    rm -rf ../nginx-"${nginx_version}".tar.gz
+    rm -rf ../openssl-"${openssl_version}".tar.gz
+
+    # 添加配置文件夹，适配旧版脚本
+    mkdir ${nginx_dir}/conf/conf.d
+fi
+}
+nginx_systemd() {
+  touch ${nginx_systemd_file}
+  cat >${nginx_systemd_file} <<EOF
+[Unit]
+Description=The NGINX HTTP and reverse proxy server
+After=syslog.target network.target remote-fs.target nss-lookup.target
+[Service]
+Type=forking
+PIDFile=/etc/nginx/logs/nginx.pid
+ExecStartPre=/etc/nginx/sbin/nginx -t
+ExecStart=/etc/nginx/sbin/nginx -c ${nginx_dir}/conf/nginx.conf
+ExecReload=/etc/nginx/sbin/nginx -s reload
+ExecStop=/bin/kill -s QUIT \$MAINPID
+PrivateTmp=true
+[Install]
+WantedBy=multi-user.target
+EOF
+  sucess_or_fail "Nginx systemd ServerFile 添加"
+  systemctl daemon-reload
 }
 install_caddy() {
   if [[ ${caddy_install_flag} == "YES" ]]; then
-    read -p "$(echo -e "${Tip}是否重新安装（Y/n）?(默认：n)")" Yn
+    read -p "$(echo -e "${Tip}检测到已经安装了caddy,是否重新安装（Y/n）?(默认：n)")" Yn
     [[ -z ${Yn} ]] && Yn="n"
-    while [[ ${Yn} != "Y" ]] && [[ ${Yn} != "y" ]] && [[ ${Yn} != "n" ]]; do
-        read -p "$(echo -e "${Tip}输入错误，重新输入：(默认：n)")" Yn
-        [[ -z ${Yn} ]] && Yn="n"
-    done
-    if [[ ${Yn} == "Y" ]] || [[ ${Yn} == "y" ]]; then
-      echo -e "${Info}开始安装caddy……"
-      curl https://getcaddy.com | bash -s personal hook.service
-    fi
+    case ${Yn} in
+    [yY][eE][sS] | [yY])
+        echo -e "${Info}开始安装caddy……"
+        sleep 2
+        curl https://getcaddy.com | bash -s personal hook.service
+        ;;
+    *)
+        ;;
+    esac
   else
-      echo -e "${Info}开始安装caddy……"
-      curl https://getcaddy.com | bash -s personal hook.service
+    echo -e "${Info}开始安装caddy……"
+    sleep 2
+    curl https://getcaddy.com | bash -s personal hook.service
   fi
 }
 install_caddy_service(){
@@ -357,38 +514,42 @@ install_caddy_service(){
 }
 install_trojan() {
   if [[ ${trojan_install_flag} == "YES" ]] ; then
-    read -p "$(echo -e "${Tip}是否重新安装（Y/n）?(默认：n)")" Yn
+    read -p "$(echo -e "${Tip}检测到已经安装了trojan,是否重新安装（Y/n）?(默认：n)")" Yn
     [[ -z ${Yn} ]] && Yn="n"
-    while [[ ${Yn} != "Y" ]] && [[ ${Yn} != "y" ]] && [[ ${Yn} != "n" ]]; do
-        read -p "$(echo -e "${Tip}输入错误，重新输入：(默认：n)")" Yn
-        [[ -z ${Yn} ]] && Yn="n"
-    done
-    if [[ ${Yn} == "Y" ]] || [[ ${Yn} == "y" ]]; then
-      echo -e "${Info}开始安装Trojan……"
-      bash -c "$(curl -fsSL https://raw.githubusercontent.com/trojan-gfw/trojan-quickstart/master/trojan-quickstart.sh)"
-    fi
+    case ${Yn} in
+    [yY][eE][sS] | [yY])
+        echo -e "${Info}开始安装trojan……"
+        sleep 2
+        bash -c "$(curl -fsSL https://raw.githubusercontent.com/trojan-gfw/trojan-quickstart/master/trojan-quickstart.sh)"
+        ;;
+    *)
+        ;;
+    esac
   else
-    echo -e "${Info}开始安装Trojan……"
+    echo -e "${Info}开始安装trojan……"
+    sleep 2
     bash -c "$(curl -fsSL https://raw.githubusercontent.com/trojan-gfw/trojan-quickstart/master/trojan-quickstart.sh)"
   fi
 }
 install_ssr() {
   if [[ ${ssr_install_flag} == "YES" ]]; then
-    read -p "$(echo -e "${Tip}是否重新安装（Y/n）?(默认：n)")" Yn
+    read -p "$(echo -e "${Tip}检测到已经安装了ssr,是否重新安装（Y/n）?(默认：n)")" Yn
     [[ -z ${Yn} ]] && Yn="n"
-    while [[ ${Yn} != "Y" ]] && [[ ${Yn} != "y" ]] && [[ ${Yn} != "n" ]]; do
-        read -p "$(echo -e "${Tip}输入错误，重新输入：(默认：n)")" Yn
-        [[ -z ${Yn} ]] && Yn="n"
-    done
-    if [[ ${Yn} == "Y" ]] || [[ ${Yn} == "y" ]]; then
-      echo -e "${Info}开始安装SSR……"
-      [[ ! -d ${ssr_conf_dir} ]] && mkdir ${ssr_conf_dir}
-      wget --no-check-certificate -O ${ssr_conf_dir}/shadowsocks-all.sh https://raw.githubusercontent.com/JeannieStudio/jeannie/master/shadowsocks-all.sh
-      chmod +x ${ssr_conf_dir}/shadowsocks-all.sh
-      \n | . ${ssr_conf_dir}/shadowsocks-all.sh 2>&1 | tee shadowsocks-all.log
-    fi
+    case ${Yn} in
+    [yY][eE][sS] | [yY])
+        echo -e "${Info}开始安装SSR……"
+        sleep 2
+        [[ ! -d ${ssr_conf_dir} ]] && mkdir ${ssr_conf_dir}
+        wget --no-check-certificate -O ${ssr_conf_dir}/shadowsocks-all.sh https://raw.githubusercontent.com/JeannieStudio/jeannie/master/shadowsocks-all.sh
+        chmod +x ${ssr_conf_dir}/shadowsocks-all.sh
+        \n | . ${ssr_conf_dir}/shadowsocks-all.sh 2>&1 | tee shadowsocks-all.log
+        ;;
+    *)
+        ;;
+    esac
   else
     echo -e "${Info}开始安装SSR……"
+    sleep 2
     [[ ! -d ${ssr_conf_dir} ]] && mkdir ${ssr_conf_dir}
     wget --no-check-certificate -O ${ssr_conf_dir}/shadowsocks-all.sh https://raw.githubusercontent.com/JeannieStudio/jeannie/master/shadowsocks-all.sh
     chmod +x ${ssr_conf_dir}/shadowsocks-all.sh
@@ -410,8 +571,8 @@ nginx_v2ray_conf() {
   cat >${nginx_conf_dir}/default.conf <<EOF
   server {
       listen 443 ssl http2;
-      ssl_certificate       /etc/letsencrypt/live/$domain/fullchain.pem;
-      ssl_certificate_key   /etc/letsencrypt/live/$domain/privkey.pem;
+      ssl_certificate       /data/${domain}/fullchain.crt;
+      ssl_certificate_key   /data/${domain}/privkey.key;
       ssl_protocols         TLSv1.3;
       ssl_ciphers           TLS13-AES-256-GCM-SHA384:TLS13-CHACHA20-POLY1305-SHA256:TLS13-AES-128-GCM-SHA256:TLS13-AES-128-CCM-8-SHA256:TLS13-AES-128-CCM-SHA256:EECDH+CHACHA20:EECDH+CHACHA20-draft:EECDH+ECDSA+AES128:EECDH+aRSA+AES128:RSA+AES128:EECDH+ECDSA+AES256:EECDH+aRSA+AES256:RSA+AES256:EECDH+ECDSA+3DES:EECDH+aRSA+3DES:RSA+3DES:!MD5;
       server_name           $domain;
@@ -438,7 +599,7 @@ nginx_v2ray_conf() {
 EOF
 }
 tls_type() {
-  if [[ -f "${nginx_bin_file}" ]] && [[ -f "${nginx_conf}" ]]; then
+  if [[ -f "${nginx_bin_file_new}" ]] && [[ -f "${nginx_conf}" ]]; then
     echo -e "${Tip}请选择支持的 TLS 版本（default:3）:"
     echo -e "${Tip}请注意,如果你使用 Quantaumlt X / 路由器 / 旧版 Shadowrocket 请选择 兼容模式"
     echo "1: TLS1.1 TLS1.2 and TLS1.3（兼容模式）"
@@ -451,15 +612,15 @@ tls_type() {
     done
     case $tls_version in
     1)
-      sed -i 's/ssl_protocols.*/ssl_protocols         TLSv1.1 TLSv1.2;/' ${nginx_conf}
+      sed -i 's/ssl_protocols.*/ssl_protocols         TLSv1.1 TLSv1.2 TLSv1.3;/' ${nginx_conf}
       echo -e "${OK} ${GreenBG} 已切换至 TLS1.1 TLS1.2 and TLS1.3 ${Font}"
       ;;
     2)
-      sed -i 's/ssl_protocols.*/ssl_protocols         TLSv1.2;/' ${nginx_conf}
+      sed -i 's/ssl_protocols.*/ssl_protocols         TLSv1.2 TLSv1.3;/' ${nginx_conf}
       echo -e "${OK} ${GreenBG} 已切换至 TLS1.2 and TLS1.3 ${Font}"
       ;;
     3)
-      sed -i 's/ssl_protocols.*/ssl_protocols         TLSv1.2;/' ${nginx_conf}
+      sed -i 's/ssl_protocols.*/ssl_protocols         TLSv1.3;/' ${nginx_conf}
       echo -e "${OK} ${GreenBG} 已切换至 TLS1.3 only ${Font}"
       ;;
     *)
@@ -594,7 +755,7 @@ http://${domain}:80 {
 https://${domain}:443 {
 gzip
 timeouts none
-tls /etc/letsencrypt/live/$domain/fullchain.pem /etc/letsencrypt/live/$domain/privkey.pem {
+tls /data/${domain}/fullchain.crt /data/${domain}/privkey.key {
    protocols tls1.0 tls1.3
 }
 root ${web_dir}
@@ -612,7 +773,7 @@ caddy_trojan_conf() {
 http://${domain}:80 {
   gzip
   timeouts none
-  tls /etc/letsencrypt/live/$domain/fullchain.pem /etc/letsencrypt/live/$domain/privkey.pem {
+  tls /data/${domain}/fullchain.crt /data/${domain}/privkey.key {
        protocols tls1.0 tls1.3
     }
   root ${web_dir}
@@ -629,7 +790,7 @@ redir https://${domain}:1234{url}
   https://${domain}:1234 {
   gzip
   timeouts none
-  tls /etc/letsencrypt/live/$domain/fullchain.pem /etc/letsencrypt/live/$domain/privkey.pem {
+  tls /data/${domain}/fullchain.crt /data/${domain}/privkey.key {
        protocols tls1.0 tls1.3
     }
   root ${web_dir}
@@ -659,8 +820,8 @@ trojan_conf() {
     ],
     "log_level": 1,
     "ssl": {
-        "cert": "/etc/letsencrypt/live/${domain}/fullchain.pem",
-        "key": "/etc/letsencrypt/live/${domain}/privkey.pem",
+        "cert": "/data/${domain}/fullchain.crt",
+        "key": "/data/${domain}/privkey.key",
         "key_password": "",
         "cipher": "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384",
         "cipher_tls13": "TLS_AES_128_GCM_SHA256:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_256_GCM_SHA384",
@@ -705,9 +866,9 @@ _EOF
   # sed -i "/\"key\":/c \"key\": \"/etc/letsencrypt/live/$domain/privkey.pem\"," ${trojan_conf}
 }
 ssr_conf() {
-  read -p "$(echo -e "${Info}请输入ssr的密码:")" password
+  read -rp "$(echo -e "${Info}请输入ssr的密码:")" password
   while [[ -z ${password} ]]; do
-    read -p "$(echo -e "${Info}密码不能为空,请重新输入:")" password
+    read -rp "$(echo -e "${Info}密码不能为空,请重新输入:")" password
   done
   #sed -i "\"server_port\": /c         \"server_port\":443," ${ssr_conf}
   #sed -i "\"redirect\": /c        \"redirect\":[\"*:443#127.0.0.1:80\"]," ${ssr_conf}
@@ -732,19 +893,46 @@ ssr_conf() {
 }
 EOF
 }
+tls_generate_script_install() {
+    if [[ "${cmd}" == "yum" ]]; then
+        ${cmd} install socat nc -y
+    else
+        ${cmd} install socat netcat -y
+    fi
+    sucess_or_fail "安装 tls 证书生成脚本依赖"
+
+    curl https://get.acme.sh | sh
+    sucess_or_fail "安装 tls 证书生成脚本"
+    source ~/.bashrc
+}
 tls_generate() {
-  echo -e "${Info}开始签发证书……"
-  if [[ -f "/etc/letsencrypt/live/$domain/fullchain.pem" ]] && [[ -f "/etc/letsencrypt/live/$domain/privkey.pem" ]]; then
+  if [[ -f "/data/${domain}/fullchain.crt" ]] && [[ -f "/data/${domain}/privkey.key" ]]; then
     echo -e "${Info}证书已存在……不需要再重新签发了……"
   else
-    read -p "$(echo -e "${Info}请输入您的邮箱:")" email
-    read -p "$(echo -e "${Tip}您输入的邮箱正确吗?[Y/n]?")" yn
-    while [[ "${yn}" != [Yy] ]]; do
-      read -p "$(echo -e "${Info}请输入您的邮箱:")" email
-      read -p "$(echo -e "${Tip}您输入的邮箱正确吗?[Y/n]?")" yn
-    done
-    certbot certonly --standalone -n --agree-tos --email $email -d $domain
-    [[ ! -d "/etc/letsencrypt/live/$domain" ]] && echo -e "${RED}证书签发失败，原因1：域名申请次数过多，换个域名试试；2：由于网络原因，申请证书所需的依赖包没下载下来，重装即可；3.邮箱填错${NO_COLOR}" && exit 1
+    if "$HOME"/.acme.sh/acme.sh --issue -d "${domain}" --standalone -k ec-256 --force --test; then
+        echo -e "${Info} TLS 证书测试签发成功，开始正式签发"
+        rm -rf "$HOME/.acme.sh/${domain}_ecc"
+        sleep 2
+    else
+        echo -e "${Error}TLS 证书测试签发失败 "
+        rm -rf "$HOME/.acme.sh/${domain}_ecc"
+        exit 1
+    fi
+
+    if "$HOME"/.acme.sh/acme.sh --issue -d "${domain}" --standalone -k ec-256 --force; then
+        echo -e "${Info} TLS 证书生成成功 "
+        sleep 2
+        mkdir /data
+        mkdir /data/${domain}
+        if "$HOME"/.acme.sh/acme.sh --installcert -d "${domain}" --fullchainpath /data/${domain}/fullchain.crt --keypath /data/${domain}/privkey.key --ecc --force; then
+            echo -e "${Info}证书配置成功 "
+            sleep 2
+        fi
+    else
+        echo -e "${Error} TLS 证书生成失败"
+        rm -rf "$HOME/.acme.sh/${domain}_ecc"
+        exit 1
+    fi
   fi
 }
 trojan_qr_config() {
@@ -946,9 +1134,7 @@ ${GREEN}https://$(v2ray_info_extraction '\"add\"')/${uuid}.html${NO_COLOR}"
 }
 download_all_mgr() {
   curl -s -o /etc/all_mgr.sh https://raw.githubusercontent.com/JeannieStudio/all_install/master/all_mgr.sh
-  while [ $? -ne 0 ]; do
-    curl -s -o /etc/all_mgr.sh https://raw.githubusercontent.com/JeannieStudio/all_install/master/all_mgr.sh
-  done
+  sucess_or_fail "修改密码、重启服务、查询证书相关信息的管理脚本下载"
   chmod +x /etc/all_mgr.sh
 }
 left_second(){
@@ -970,8 +1156,9 @@ install_trojan_nginx() {
   set_PATH
   check_root
   check_sys
+  sys_cmd
   install_dependency
-  #close_firewall
+  close_firewall
   check_caddy_installed_status
   uninstall_caddy
   check_v2ray_installed_status
@@ -979,11 +1166,16 @@ install_trojan_nginx() {
   check_ssr_installed_status
   uninstall_ssr
   uninstall_web
+  port_used_check 80
+  port_used_check 443
   get_ip
   check_domain
+  tls_generate_script_install
   tls_generate
   check_nginx_installed_status
+  uninstall_nginx
   install_nginx
+  nginx_systemd
   nginx_trojan_conf
   web_download
   systemctl restart nginx
@@ -1006,8 +1198,9 @@ install_trojan_caddy() {
   set_PATH
   check_root
   check_sys
+  sys_cmd
   install_dependency
-  #close_firewall
+  close_firewall
   check_nginx_installed_status
   uninstall_nginx
   check_v2ray_installed_status
@@ -1015,8 +1208,11 @@ install_trojan_caddy() {
   check_ssr_installed_status
   uninstall_ssr
   uninstall_web
+  port_used_check 80
+  port_used_check 443
   get_ip
   check_domain
+  tls_generate_script_install
   tls_generate
   check_caddy_installed_status
   install_caddy
@@ -1042,8 +1238,9 @@ install_v2ray_nginx() {
   set_PATH
   check_root
   check_sys
+  sys_cmd
   install_dependency
-  #close_firewall
+  close_firewall
   check_caddy_installed_status
   uninstall_caddy
   check_trojan_installed_status
@@ -1051,11 +1248,16 @@ install_v2ray_nginx() {
   check_ssr_installed_status
   uninstall_ssr
   uninstall_web
+  port_used_check 80
+  port_used_check 443
   get_ip
   check_domain
+  tls_generate_script_install
   tls_generate
   check_nginx_installed_status
+  uninstall_nginx
   install_nginx
+  nginx_systemd
   nginx_v2ray_conf
   tls_type
   web_download
@@ -1081,8 +1283,9 @@ install_v2ray_caddy() {
   set_PATH
   check_root
   check_sys
+  sys_cmd
   install_dependency
-  #close_firewall
+  close_firewall
   check_nginx_installed_status
   uninstall_nginx
   check_trojan_installed_status
@@ -1090,8 +1293,11 @@ install_v2ray_caddy() {
   check_ssr_installed_status
   uninstall_ssr
   uninstall_web
+  port_used_check 80
+  port_used_check 443
   get_ip
   check_domain
+  tls_generate_script_install
   tls_generate
   check_caddy_installed_status
   install_caddy
@@ -1120,8 +1326,9 @@ install_ssr_caddy() {
   set_PATH
   check_root
   check_sys
+  sys_cmd
   install_dependency
-  #close_firewall
+  close_firewall
   check_nginx_installed_status
   uninstall_nginx
   check_v2ray_installed_status
@@ -1129,8 +1336,11 @@ install_ssr_caddy() {
   check_trojan_installed_status
   uninstall_trojan
   uninstall_web
+  port_used_check 80
+  port_used_check 443
   get_ip
   check_domain
+  tls_generate_script_install
   tls_generate
   check_caddy_installed_status
   install_caddy
@@ -1159,8 +1369,10 @@ install_bbr() {
 uninstall_all() {
   check_root
   check_sys
+  sys_cmd
   check_nginx_installed_status
   uninstall_nginx
+  uninstall_new_nginx
   check_trojan_installed_status
   uninstall_trojan
   check_ssr_installed_status
@@ -1176,6 +1388,8 @@ uninstall_all() {
   check_v2ray_pid
   check_ssr_pid
   check_trojan_pid
+  port_used_check 80
+  port_used_check 443
   echo -e "${Info}卸载完成，系统回到初始状态！"
 }
 main() {
@@ -1194,9 +1408,9 @@ ${GREEN}3. 安装v2ray+tls+nginx
 ${FUCHSIA}===================================================
 ${GREEN}4. 安装v2ray+tls+caddy
 ${FUCHSIA}===================================================
-${GREEN}5. 安装ssr+tls+nginx
+${GREEN}5. 安装ssr+tls+caddy
 ${FUCHSIA}===================================================
-${GREEN}6. 安装ssr+tls+caddy
+${GREEN}6. 安装ssr+tls+nginx
 ${FUCHSIA}===================================================
 ${GREEN}7. 卸载全部，系统回到初始状态
 ${FUCHSIA}===================================================
