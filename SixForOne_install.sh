@@ -314,8 +314,8 @@ install_dependency() {
   sucess_or_fail "git安装"
   ${cmd} -y install lsof
   sucess_or_fail "lsof安装"
-  ${cmd} -y install firewalld
-  sucess_or_fail "firewalld安装"
+  #${cmd} -y install firewalld
+  #sucess_or_fail "firewalld安装"
   if [[ ${cmd} == "yum" ]]; then
     yum -y install crontabs
   else
