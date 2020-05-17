@@ -325,7 +325,7 @@ install_dependency() {
   sucess_or_fail "git安装"
   ${cmd} -y install lsof
   sucess_or_fail "lsof安装"
-  if [ is_debian10 ! = "y" ]; then
+  if [[ ${is_debian10} != "y"  ]]; then
     ${cmd} -y install firewalld
     sucess_or_fail "firewalld安装"
   fi
@@ -1173,7 +1173,7 @@ install_trojan_nginx() {
   sys_cmd
   GCE_debian10
   install_dependency
-  [[ is_debian10 != "y" ]]  && close_firewall
+  [[ ${is_debian10} != "y" ]]  && close_firewall
   check_caddy_installed_status
   uninstall_caddy
   check_v2ray_installed_status
@@ -1216,7 +1216,7 @@ install_trojan_caddy() {
   sys_cmd
   GCE_debian10
   install_dependency
-  [[ is_debian10 != "y" ]]  && close_firewall
+  [[ ${is_debian10} != "y" ]]  && close_firewall
   check_nginx_installed_status
   uninstall_nginx
   check_v2ray_installed_status
@@ -1257,7 +1257,7 @@ install_v2ray_nginx() {
   sys_cmd
   GCE_debian10
   install_dependency
-  [[ is_debian10 != "y" ]]  && close_firewall
+  [[ ${is_debian10} != "y" ]]  && close_firewall
   check_caddy_installed_status
   uninstall_caddy
   check_trojan_installed_status
@@ -1303,7 +1303,7 @@ install_v2ray_caddy() {
   sys_cmd
   GCE_debian10
   install_dependency
-  [[ is_debian10 != "y" ]]  && close_firewall
+  [[ ${is_debian10} != "y" ]]  && close_firewall
   check_nginx_installed_status
   uninstall_nginx
   check_trojan_installed_status
@@ -1347,7 +1347,7 @@ install_ssr_caddy() {
   sys_cmd
   GCE_debian10
   install_dependency
-  [[ is_debian10 != "y" ]]  && close_firewall
+  [[ ${is_debian10} != "y" ]]  && close_firewall
   check_nginx_installed_status
   uninstall_nginx
   check_v2ray_installed_status
