@@ -121,6 +121,17 @@ sucess_or_fail() {
         exit 1
     fi
 }
+GCE_debian10(){
+  read -rp "$(echo -e "${Info}因为谷歌云的debian10抽风，所以需要确认您当前是否是谷歌云的debian10系统吗（Y/n）？${RED}注意：只有谷歌云的debian10系统才填y，其他都填n。如果填错，将直接导致您后面无法科学上网（Y/n）(默认：n)${NO_COLOR}")" Yn
+  [[ -z ${Yn} ]] && Yn="n"
+    case ${Yn} in
+    [yY][eE][sS] | [yY])
+           is_debian10="y"
+        ;;
+    *)
+        ;;
+    esac
+}
 get_ip() {
   local_ip=$(curl -s https://ipinfo.io/ip)
   [[ -z ${local_ip} ]] && ${local_ip}=$(curl -s https://api.ip.sb/ip)
@@ -314,8 +325,11 @@ install_dependency() {
   sucess_or_fail "git安装"
   ${cmd} -y install lsof
   sucess_or_fail "lsof安装"
-  #${cmd} -y install firewalld
-  #sucess_or_fail "firewalld安装"
+  if [ is_debian10 ! = "y" ]; then
+    ${cmd} -y install firewalld
+    sucess_or_fail "firewalld安装"
+  fi
+
   if [[ ${cmd} == "yum" ]]; then
     yum -y install crontabs
   else
@@ -1157,8 +1171,9 @@ install_trojan_nginx() {
   check_root
   check_sys
   sys_cmd
+  GCE_debian10
   install_dependency
-  #close_firewall
+  [[ is_debian10 != "y" ]]  && close_firewall
   check_caddy_installed_status
   uninstall_caddy
   check_v2ray_installed_status
@@ -1199,8 +1214,9 @@ install_trojan_caddy() {
   check_root
   check_sys
   sys_cmd
+  GCE_debian10
   install_dependency
-  #close_firewall
+  [[ is_debian10 != "y" ]]  && close_firewall
   check_nginx_installed_status
   uninstall_nginx
   check_v2ray_installed_status
@@ -1239,8 +1255,9 @@ install_v2ray_nginx() {
   check_root
   check_sys
   sys_cmd
+  GCE_debian10
   install_dependency
-  #close_firewall
+  [[ is_debian10 != "y" ]]  && close_firewall
   check_caddy_installed_status
   uninstall_caddy
   check_trojan_installed_status
@@ -1284,8 +1301,9 @@ install_v2ray_caddy() {
   check_root
   check_sys
   sys_cmd
+  GCE_debian10
   install_dependency
-  #close_firewall
+  [[ is_debian10 != "y" ]]  && close_firewall
   check_nginx_installed_status
   uninstall_nginx
   check_trojan_installed_status
@@ -1327,8 +1345,9 @@ install_ssr_caddy() {
   check_root
   check_sys
   sys_cmd
+  GCE_debian10
   install_dependency
-  #close_firewall
+  [[ is_debian10 != "y" ]]  && close_firewall
   check_nginx_installed_status
   uninstall_nginx
   check_v2ray_installed_status
