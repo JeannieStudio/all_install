@@ -1158,7 +1158,7 @@ install_trojan_nginx() {
   check_sys
   sys_cmd
   install_dependency
-  close_firewall
+  #close_firewall
   check_caddy_installed_status
   uninstall_caddy
   check_v2ray_installed_status
@@ -1200,7 +1200,7 @@ install_trojan_caddy() {
   check_sys
   sys_cmd
   install_dependency
-  close_firewall
+  #close_firewall
   check_nginx_installed_status
   uninstall_nginx
   check_v2ray_installed_status
@@ -1240,7 +1240,7 @@ install_v2ray_nginx() {
   check_sys
   sys_cmd
   install_dependency
-  close_firewall
+  #close_firewall
   check_caddy_installed_status
   uninstall_caddy
   check_trojan_installed_status
@@ -1285,7 +1285,7 @@ install_v2ray_caddy() {
   check_sys
   sys_cmd
   install_dependency
-  close_firewall
+  #close_firewall
   check_nginx_installed_status
   uninstall_nginx
   check_trojan_installed_status
@@ -1328,7 +1328,7 @@ install_ssr_caddy() {
   check_sys
   sys_cmd
   install_dependency
-  close_firewall
+  #close_firewall
   check_nginx_installed_status
   uninstall_nginx
   check_v2ray_installed_status
