@@ -144,12 +144,12 @@ get_ip() {
   [[ -z ${local_ip} ]] && echo -e "${Error}获取不到你vps的ip地址" && exit
 }
 check_domain() {
-  read -p "请输入您的域名(如果用Cloudflare解析域名，请点击小云彩使其变灰):" domain
-  real_ip=$(ping ${domain} -c 1 | sed '1{s/[^(]*(//;s/).*//;q}')
+  read -rp "请输入您的域名(如果用Cloudflare解析域名，请点击小云彩使其变灰):" domain
+  real_ip=$(ping "${domain}" -c 1 | sed '1{s/[^(]*(//;s/).*//;q}')
   while [ "${real_ip}" != "${local_ip}" ]; do
-    read -p "本机IP和域名绑定的IP不一致，请检查域名是否解析成功,并重新输入域名:" domain
-    real_ip=$(ping ${domain} -c 1 | sed '1{s/[^(]*(//;s/).*//;q}')
-    read -p "我已人工确认，本机Ip和域名绑定的IP一致，继续安装（Y/n）？（默认:n）" continue_install
+    read -rp "本机IP和域名绑定的IP不一致，请检查域名是否解析成功,并重新输入域名:" domain
+    real_ip=$(ping "${domain}" -c 1 | sed '1{s/[^(]*(//;s/).*//;q}')
+    read -rp "我已人工确认，本机Ip和域名绑定的IP一致，继续安装（Y/n）？（默认:n）" continue_install
     [[ -z ${continue_install} ]] && continue_install="n"
     case ${continue_install} in
     [yY][eE][sS] | [yY])
@@ -397,6 +397,10 @@ open_port() {
     iptables -I INPUT -m state --state NEW -m udp -p udp --dport 80 -j ACCEPT
     ip6tables -I INPUT -m state --state NEW -m tcp -p tcp --dport 80 -j ACCEPT
     ip6tables -I INPUT -m state --state NEW -m udp -p udp --dport 80 -j ACCEPT
+    iptables -I INPUT -m state --state NEW -m tcp -p tcp --dport 443 -j ACCEPT
+    iptables -I INPUT -m state --state NEW -m udp -p udp --dport 443 -j ACCEPT
+    ip6tables -I INPUT -m state --state NEW -m tcp -p tcp --dport 443 -j ACCEPT
+    ip6tables -I INPUT -m state --state NEW -m udp -p udp --dport 443 -j ACCEPT
 	fi
 }
 install_nginx() {

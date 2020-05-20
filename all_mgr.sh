@@ -412,7 +412,7 @@ mgr(){
       $FUCHSIA=======================================================
       ${GREEN}7. 更新证书有效期       ${GREEN}0. 啥也不做，退出
       $FUCHSIA=======================================================${NO_COLOR}"
-      read -p "请输入您要执行的操作的数字:" aNum
+      read -rp "请输入您要执行的操作的数字:" aNum
       case $aNum in
           1)systemctl stop trojan
             echo -e  "${GREEN}trojan服务停止${NO_COLOR}"
@@ -431,7 +431,7 @@ mgr(){
           ;;
           6)count_days
           ;;
-          7)/usr/bin/certbot renew
+          7)echo -e "目前证书在 60 天以后会自动更新, 你无需任何操作. 今后有可能会缩短这个时间, 不过都是自动的, 你不用关心."
           ;;
           0) exit
           ;;
