@@ -221,8 +221,8 @@ change_password(){
         while [ -z "${password}" ]; do
             read -rp "$(echo -e "${Info}密码不能为空：")" password
         done
-        sed -i "10c \"$password\"," ${trojan_conf_file}
-        sed -i "10c \"$password\"," ${web_dir}/${uuid}.json
+        sed -i "10c \"$password\"" ${trojan_conf_file}
+        sed -i "10c \"$password\"" ${web_dir}/${uuid}.json
         ;;
     *)
         echo -e "${Info}什么也没做……"
