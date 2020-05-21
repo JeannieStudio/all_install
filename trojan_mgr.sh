@@ -226,6 +226,7 @@ change_password(){
         ;;
     *)
         echo -e "${Info}什么也没做……"
+        exit 1
         ;;
     esac
 }
