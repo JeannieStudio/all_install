@@ -35,6 +35,10 @@ nginx_dir="/etc/nginx"
 nginx_openssl_src="/usr/local/src"
 nginx_systemd_file="/etc/systemd/system/nginx.service"
 trojan_systemd_file="/etc/systemd/system/trojan.service"
+caddy_bin_dir="/usr/local/bin"
+caddy_conf_dir="/etc/caddy"
+caddy_conf="${caddy_conf_dir}/Caddyfile"
+caddy_systemd_file="/etc/systemd/system/caddy.service"
 nginx_version="1.18.0"
 openssl_version="1.1.1g"
 jemalloc_version="5.2.1"
@@ -254,9 +258,10 @@ ${GREEN}详细信息：https://${domain}/${uuid}.html${NO_COLOR}"
 }
 
 main() {
-  echo -e "
+  if [[ -f ${nginx_bin_file} ]] && [[ -d ${trojan_dir} ]]; then
+    echo -e "
       $FUCHSIA====================================================================
-      ${GREEN}           Trojan-go管理脚本（authored by Jeannie）
+      ${GREEN}         检测到您当前安装的是Nginx + Trojan-go + Tls
       $FUCHSIA====================================================================
       ${GREEN}1. 停止trojan-go            ${GREEN}2. 重启trojan-go
       $FUCHSIA====================================================================
@@ -334,5 +339,87 @@ main() {
     echo -e "${RedBG}请输入正确的数字${Font}"
     ;;
   esac
+  elif  [[ -f "${caddy_bin_dir}/caddy" ]] && [[ -d "${trojan_dir}" ]]; then
+    echo -e "
+      $FUCHSIA====================================================================
+      ${GREEN}         检测到您当前安装的是Caddy + Trojan-go + Tls
+      $FUCHSIA====================================================================
+      ${GREEN}1. 停止trojan-go            ${GREEN}2. 重启trojan-go
+      $FUCHSIA====================================================================
+      ${GREEN}3. 修改trojan-go密码        ${GREEN}4. 停止caddy
+      $FUCHSIA====================================================================
+      ${GREEN}5. 重启caddy                ${GREEN}6.启用websocket协议
+      $FUCHSIA====================================================================
+      ${GREEN}7.禁用websocket协议          ${GREEN}8. 查询证书有效期剩余天数
+      $FUCHSIA====================================================================
+      ${GREEN}9. 更新证书有效期             ${GREEN}0. 啥也不做，退出
+      $FUCHSIA====================================================================${NO_COLOR}"
+  read -rp "请输入数字：" menu_num
+  case $menu_num in
+  1)
+    systemctl stop trojan.service
+    echo -e  "${GREEN}trojan-go服务停止${NO_COLOR}"
+    ;;
+  2)
+    systemctl start trojan.service
+    echo -e  "${GREEN}trojan-go服务启动${NO_COLOR}"
+
+    ;;
+  3)
+    trojan_info_extraction
+    get_info
+    change_password
+    trojan_go_info_html
+    systemctl stop trojan.service
+    systemctl start trojan.service
+	  systemctl enable trojan.service
+    trojan_go_basic_information
+    update_trojan_info
+    ;;
+  4)
+    caddy -service stop
+    echo -e  "${GREEN}caddy服务停止${NO_COLOR}"
+    ;;
+  5)
+    caddy -service restart
+    echo -e  "${GREEN}caddy服务启动${NO_COLOR}"
+    ;;
+  6)
+    trojan_info_extraction
+    get_info
+    open_websocket
+    trojan_go_info_html
+    systemctl stop trojan.service
+    systemctl start trojan.service
+	  systemctl enable trojan.service
+	  trojan_go_basic_information
+	  update_trojan_info
+    ;;
+  7)
+    trojan_info_extraction
+    get_info
+    close_websocket
+    trojan_go_info_html
+    systemctl stop trojan.service
+    systemctl start trojan.service
+	  systemctl enable trojan.service
+	  trojan_go_basic_information
+	  update_trojan_info
+    ;;
+  8)
+    count_days
+    ;;
+  9)
+
+    echo -e "目前证书在 60 天以后会自动更新, 你无需任何操作. 今后有可能会缩短这个时间, 不过都是自动的, 你不用关心."
+    ;;
+  0)
+    exit 0
+    ;;
+  *)
+    echo -e "${RedBG}请输入正确的数字${Font}"
+    ;;
+  esac
+  fi
 }
 main
