@@ -137,11 +137,11 @@ get_info(){
   websocket_path=$(trojan_info_extraction '\"websocket_path\"')
 }
 update_trojan_info(){
-  sed -i "s| \"password\":.* | \"password\": \"${password}\" |" ${trojan_qr_config_file}
-  sed -i "s| \"websocket_status\":.* | \"websocket_status\": \"${websocket_status}\" |" ${trojan_qr_config_file}
-  sed -i "s| \"obfuscation_password\":.* | \"obfuscation_password\": \"${obfuscation_password}\" |" ${trojan_qr_config_file}
-  sed -i "s| \"double_tls\":.* | \"double_tls\": \"${double_tls}\" |" ${trojan_qr_config_file}
-  sed -i "s| \"websocket_path\":.* | \"websocket_path\": \"${websocket_path}\" |" ${trojan_qr_config_file}
+  sed -i "s|\"password\":.*|\"password\": \"${password}\"|" ${trojan_qr_config_file}
+  sed -i "s|\"websocket_status\":.*|\"websocket_status\": \"${websocket_status}\"|" ${trojan_qr_config_file}
+  sed -i "s|\"obfuscation_password\":.*|\"obfuscation_password\": \"${obfuscation_password}\"|" ${trojan_qr_config_file}
+  sed -i "s|\"double_tls\":.*|\"double_tls\": \"${double_tls}\"|" ${trojan_qr_config_file}
+  sed -i "s|\"websocket_path\":.*|\"websocket_path\": \"${websocket_path}\"|" ${trojan_qr_config_file}
 }
 open_websocket(){
   if [[ ${websocket_status} == "开启" ]]; then
@@ -163,9 +163,9 @@ open_websocket(){
           echo -e "${Info}设置了混淆密码对性能有一定影响，请自行斟酌安全性和性能的平衡，默认为空"
           read -rp "$(echo -e "${Info}请输入混淆密码：")" obfuscation_password
           sed -i "62c \"obfuscation_password\": \"${obfuscation_password}\"," ${trojan_conf_file}
-          sed -i "62c \"obfuscation_password\": \"${obfuscation_password}\"," ${web_dir}/${uuid}.json
+          sed -i "62c \"obfuscation_password\": \"${obfuscation_password}\"," ${web_dir}/"${uuid}".json
           sed -i "63c \"double_tls\": true," ${trojan_conf_file}
-          sed -i "63c \"double_tls\": true," ${web_dir}/${uuid}.json
+          sed -i "63c \"double_tls\": true," ${web_dir}/"${uuid}".json
           double_tls="开启"
           ;;
       *)

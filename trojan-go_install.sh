@@ -927,6 +927,8 @@ trojan_nginx_install(){
 }
 trojan_caddy_install(){
   check_root
+  # shellcheck disable=SC2164
+  cd /root
   set_SELINUX
   check_sys
   sys_cmd
