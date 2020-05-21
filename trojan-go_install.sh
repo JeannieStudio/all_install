@@ -894,7 +894,7 @@ trojan_nginx_install(){
   check_sys
   sys_cmd
   sucess_or_fail
-  GCE_debian10
+  #GCE_debian10
   install_dependency
   #close_firewall
   download_install
