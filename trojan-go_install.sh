@@ -124,16 +124,6 @@ install_dependency() {
   sucess_or_fail "git安装"
   ${cmd} -y install lsof
   sucess_or_fail "lsof安装"
-  if [[ ${cmd} == "apt"  ]]; then
-    ${cmd} -y install iptables
-    sucess_or_fail "iptables安装"
-    ${cmd} -y install iptables-persistent
-    sucess_or_fail "iptables-persistent安装"
-  else
-    ${cmd} -y install firewalld
-    sucess_or_fail "firewalld安装"
-  fi
-
   if [[ ${cmd} == "yum" ]]; then
     yum -y install crontabs
   else
@@ -907,7 +897,6 @@ trojan_nginx_install(){
   GCE_debian10
   install_dependency
   #close_firewall
-  open_port
   download_install
   port_used_check 80
   port_used_check 443
@@ -942,10 +931,8 @@ trojan_caddy_install(){
   check_sys
   sys_cmd
   sucess_or_fail
-  #GCE_debian10
   install_dependency
   #close_firewall
-  open_port
   download_install
   port_used_check 80
   port_used_check 443
