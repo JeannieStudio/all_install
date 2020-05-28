@@ -325,10 +325,10 @@ install_dependency() {
   sucess_or_fail "git安装"
   ${cmd} -y install lsof
   sucess_or_fail "lsof安装"
-  if [[ ${is_debian10} != "y"  ]]; then
-    ${cmd} -y install firewalld
-    sucess_or_fail "firewalld安装"
-  fi
+  #if [[ ${is_debian10} != "y"  ]]; then
+  #  ${cmd} -y install firewalld
+  #  sucess_or_fail "firewalld安装"
+  #fi
 
   if [[ ${cmd} == "yum" ]]; then
     yum -y install crontabs
@@ -709,7 +709,7 @@ web_download() {
       ${Info}13. https://templated.co/breadth
       ${Info}14. https://templated.co/undeviating
       ${Info}15. https://templated.co/lorikeet"
-    read -p "$(echo -e "${Tip}请输入你要下载的网站的数字:")" aNum
+    read -rp "$(echo -e "${Tip}请输入你要下载的网站的数字:")" aNum
     case $aNum in
     1)
       wget -O ${web_dir}/web.zip --no-check-certificate https://templated.co/intensify/download
@@ -899,7 +899,7 @@ ssr_conf() {
     "local_port":1080,
     "password":"${password}",
     "timeout":120,
-    "method":"none",
+    "method":"chacha20-ietf",
     "protocol":"auth_chain_a",
     "protocol_param":"",
     "obfs":"tls1.2_ticket_auth",
@@ -1175,9 +1175,7 @@ install_trojan_nginx() {
   check_root
   check_sys
   sys_cmd
-  GCE_debian10
   install_dependency
-  [[ ${is_debian10} != "y" ]]  && close_firewall
   check_caddy_installed_status
   uninstall_caddy
   check_v2ray_installed_status
@@ -1218,9 +1216,7 @@ install_trojan_caddy() {
   check_root
   check_sys
   sys_cmd
-  GCE_debian10
   install_dependency
-  [[ ${is_debian10} != "y" ]]  && close_firewall
   check_nginx_installed_status
   uninstall_nginx
   check_v2ray_installed_status
@@ -1259,9 +1255,7 @@ install_v2ray_nginx() {
   check_root
   check_sys
   sys_cmd
-  GCE_debian10
   install_dependency
-  [[ ${is_debian10} != "y" ]]  && close_firewall
   check_caddy_installed_status
   uninstall_caddy
   check_trojan_installed_status
@@ -1305,9 +1299,7 @@ install_v2ray_caddy() {
   check_root
   check_sys
   sys_cmd
-  GCE_debian10
   install_dependency
-  [[ ${is_debian10} != "y" ]]  && close_firewall
   check_nginx_installed_status
   uninstall_nginx
   check_trojan_installed_status
@@ -1349,9 +1341,7 @@ install_ssr_caddy() {
   check_root
   check_sys
   sys_cmd
-  GCE_debian10
   install_dependency
-  [[ ${is_debian10} != "y" ]]  && close_firewall
   check_nginx_installed_status
   uninstall_nginx
   check_v2ray_installed_status

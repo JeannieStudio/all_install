@@ -203,7 +203,7 @@ ssr_conf() {
     "local_port":1080,
     "password":"${password}",
     "timeout":120,
-    "method":"none",
+    "method":"chacha20-ietf",
     "protocol":"auth_chain_a",
     "protocol_param":"",
     "obfs":"tls1.2_ticket_auth",
@@ -471,7 +471,7 @@ mgr(){
           ;;
           6)count_days
           ;;
-          7)/usr/bin/certbot renew
+          7)echo -e "目前证书在 60 天以后会自动更新, 你无需任何操作. 今后有可能会缩短这个时间, 不过都是自动的, 你不用关心."
           ;;
           0) exit
           ;;
@@ -511,7 +511,7 @@ mgr(){
           ;;
           6)count_days
           ;;
-          7)/usr/bin/certbot renew
+          7)echo -e "目前证书在 60 天以后会自动更新, 你无需任何操作. 今后有可能会缩短这个时间, 不过都是自动的, 你不用关心."
           ;;
           0) exit
           ;;
@@ -551,7 +551,7 @@ mgr(){
           ;;
           6)count_days
           ;;
-          7)/usr/bin/certbot renew
+          7)echo -e "目前证书在 60 天以后会自动更新, 你无需任何操作. 今后有可能会缩短这个时间, 不过都是自动的, 你不用关心."
           ;;
           0) exit
           ;;
@@ -592,7 +592,7 @@ mgr(){
           ;;
           6)count_days
           ;;
-          7)/usr/bin/certbot renew
+          7)echo -e "目前证书在 60 天以后会自动更新, 你无需任何操作. 今后有可能会缩短这个时间, 不过都是自动的, 你不用关心."
           ;;
           0) exit
           ;;
