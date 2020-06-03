@@ -325,11 +325,8 @@ install_dependency() {
   sucess_or_fail "git安装"
   ${cmd} -y install lsof
   sucess_or_fail "lsof安装"
-  #if [[ ${is_debian10} != "y"  ]]; then
-  #  ${cmd} -y install firewalld
-  #  sucess_or_fail "firewalld安装"
-  #fi
-
+  ${cmd} -y install firewalld
+  sucess_or_fail "firewalld安装"
   if [[ ${cmd} == "yum" ]]; then
     yum -y install crontabs
   else
@@ -390,6 +387,7 @@ close_firewall() {
   systemctl stop firewalld.service
   systemctl disable firewalld.service
   echo -e "${Info} firewalld 已关闭 ${Font}"
+  iptables -F
 }
 open_port() {
   if [[ ${release} != "centos" ]]; then
@@ -788,7 +786,7 @@ caddy_trojan_conf() {
    [[ ! -d ${caddy_conf_dir} ]] && mkdir ${caddy_conf_dir}
   touch ${caddy_conf}
   cat >${caddy_conf} <<_EOF
-http://${domain}:80 {
+http://${domain} {
   gzip
   timeouts none
   tls /data/${domain}/fullchain.crt /data/${domain}/privkey.key {
@@ -940,8 +938,8 @@ tls_generate() {
     if "$HOME"/.acme.sh/acme.sh --issue -d "${domain}" --standalone -k ec-256 --force; then
         echo -e "${Info} TLS 证书生成成功 "
         sleep 2
-        mkdir /data
-        mkdir /data/${domain}
+        [[ -d "/data" ]] && mkdir /data
+        [[ -d "/data/${domain}" ]] && mkdir /data/${domain}
         if "$HOME"/.acme.sh/acme.sh --installcert -d "${domain}" --fullchainpath /data/${domain}/fullchain.crt --keypath /data/${domain}/privkey.key --ecc --force; then
             echo -e "${Info}证书配置成功 "
             sleep 2
@@ -1176,6 +1174,7 @@ install_trojan_nginx() {
   check_sys
   sys_cmd
   install_dependency
+  close_firewall
   check_caddy_installed_status
   uninstall_caddy
   check_v2ray_installed_status
@@ -1217,6 +1216,7 @@ install_trojan_caddy() {
   check_sys
   sys_cmd
   install_dependency
+  close_firewall
   check_nginx_installed_status
   uninstall_nginx
   check_v2ray_installed_status
@@ -1256,6 +1256,7 @@ install_v2ray_nginx() {
   check_sys
   sys_cmd
   install_dependency
+  close_firewall
   check_caddy_installed_status
   uninstall_caddy
   check_trojan_installed_status
@@ -1300,6 +1301,7 @@ install_v2ray_caddy() {
   check_sys
   sys_cmd
   install_dependency
+  close_firewall
   check_nginx_installed_status
   uninstall_nginx
   check_trojan_installed_status
@@ -1342,6 +1344,7 @@ install_ssr_caddy() {
   check_sys
   sys_cmd
   install_dependency
+  close_firewall
   check_nginx_installed_status
   uninstall_nginx
   check_v2ray_installed_status
