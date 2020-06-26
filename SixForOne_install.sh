@@ -938,8 +938,8 @@ tls_generate() {
     if "$HOME"/.acme.sh/acme.sh --issue -d "${domain}" --standalone -k ec-256 --force; then
         echo -e "${Info} TLS 证书生成成功 "
         sleep 2
-        [[ -d "/data" ]] && mkdir /data
-        [[ -d "/data/${domain}" ]] && mkdir /data/${domain}
+        [[ ! -d "/data" ]] && mkdir /data
+        [[ ! -d "/data/${domain}" ]] && mkdir /data/${domain}
         if "$HOME"/.acme.sh/acme.sh --installcert -d "${domain}" --fullchainpath /data/${domain}/fullchain.crt --keypath /data/${domain}/privkey.key --ecc --force; then
             echo -e "${Info}证书配置成功 "
             sleep 2
