@@ -22,8 +22,8 @@ Green_font_prefix="\033[32m" && Red_font_prefix="\033[31m" && Green_background_p
 Info="${Green_font_prefix}[信息]${Font_color_suffix}"
 Error="${Red_font_prefix}[错误]${Font_color_suffix}"
 Tip="${Green_font_prefix}[注意]${Font_color_suffix}"
-nginx_bin_file="/usr/sbin/nginx"
-nginx_bin_file_new="/etc/nginx/sbin/nginx"
+nginx_bin_old_file="/usr/sbin/nginx"
+nginx_bin_file="/etc/nginx/sbin/nginx"
 nginx_conf_dir="/etc/nginx/conf/conf.d"
 nginx_conf="${nginx_conf_dir}/default.conf"
 nginx_dir="/etc/nginx"
@@ -164,7 +164,7 @@ check_domain() {
   done
 }
 check_nginx_installed_status() {
-  if [[ -f ${nginx_bin_file_new} ]]; then
+  if [[ -f ${nginx_bin_file} ]]; then
     echo -e "${Info}检测到您已经安装了Nginx!"
     nginx_install_flag="YES"
   fi
@@ -193,8 +193,8 @@ check_caddy_installed_status() {
     caddy_install_flag="YES"
   fi
 }
-uninstall_nginx() {
-  if [[ -f ${nginx_bin_file} ]]; then
+uninstall_old_nginx() {
+  if [[ -f ${nginx_bin_old_file} ]]; then
     nginx -s stop
     echo -e "${Info}检测到您安装了旧版Nginx，马上为您卸载旧版……"
     if [[ ${release} == "centos" ]]; then
@@ -207,13 +207,15 @@ uninstall_nginx() {
     echo -e "${Info}旧版Nginx卸载成功！"
   fi
 }
-uninstall_new_nginx() {
-  if [[ -f ${nginx_bin_file_new} ]]; then
+uninstall_nginx() {
+  if [[ -f ${nginx_bin_file} ]]; then
         echo -e "${Tip} 是否卸载 Nginx [Y/N]? "
         read -r uninstall_nginx
         case ${uninstall_nginx} in
         [yY][eE][sS] | [yY])
+            systemctl stop nginx
             rm -rf ${nginx_dir}
+            rm -f ${nginx_systemd_file}
             echo -e "${Info} 已卸载 Nginx ${Font}"
             ;;
         *) ;;
@@ -266,6 +268,9 @@ uninstall_ssr() {
 remove_mgr(){
   [[ -f "/etc/all_mgr.sh" ]] && rm -f /etc/all_mgr.sh
 }
+remove_motd(){
+  [[ -f "/etc/motd" ]] && rm -f /etc/motd
+}
 port_used_check() {
     if [[ 0 -eq $(lsof -i:"$1" | grep -i -c "listen") ]]; then
         echo -e "${Info} $1 端口未被占用"
@@ -282,7 +287,7 @@ port_used_check() {
 }
 install_v2ray() {
   if [[ ${v2ray_install_flag} == "YES" ]]; then
-    read -p "$(echo -e "${Tip}检测到已经安装了v2ray,是否重新安装（Y/n）?(默认：n)")" Yn
+    read -rp "$(echo -e "${Tip}检测到已经安装了v2ray,是否重新安装（Y/n）?(默认：n)")" Yn
     [[ -z ${Yn} ]] && Yn="n"
     case ${Yn} in
     [yY][eE][sS] | [yY])
@@ -370,7 +375,7 @@ chrony_install() {
     chronyc sourcestats -v
     chronyc tracking -v
     date
-    read -p "请确认时间是否准确,误差范围±3分钟(Y/N): " chrony_install
+    read -rp "请确认时间是否准确,误差范围±3分钟(Y/N): " chrony_install
     [[ -z ${chrony_install} ]] && chrony_install="Y"
     case $chrony_install in
     [yY][eE][sS] | [yY])
@@ -526,11 +531,13 @@ install_caddy_service(){
   #  done
  #fi
  #caddy -service install -agree -email "${email}" -conf "${caddy_conf}"
- caddy -service install -agree -email "example@gmail.com" -conf "${caddy_conf}"
+ random_num=$((RANDOM%12+4))
+ email="$(head -n 10 /dev/urandom | md5sum | head -c ${random_num})@gmail.com"
+ caddy -service install -agree -email "${email}" -conf "${caddy_conf}"
 }
 install_trojan() {
   if [[ ${trojan_install_flag} == "YES" ]] ; then
-    read -p "$(echo -e "${Tip}检测到已经安装了trojan,是否重新安装（Y/n）?(默认：n)")" Yn
+    read -rp "$(echo -e "${Tip}检测到已经安装了trojan,是否重新安装（Y/n）?(默认：n)")" Yn
     [[ -z ${Yn} ]] && Yn="n"
     case ${Yn} in
     [yY][eE][sS] | [yY])
@@ -549,7 +556,7 @@ install_trojan() {
 }
 install_ssr() {
   if [[ ${ssr_install_flag} == "YES" ]]; then
-    read -p "$(echo -e "${Tip}检测到已经安装了ssr,是否重新安装（Y/n）?(默认：n)")" Yn
+    read -rp "$(echo -e "${Tip}检测到已经安装了ssr,是否重新安装（Y/n）?(默认：n)")" Yn
     [[ -z ${Yn} ]] && Yn="n"
     case ${Yn} in
     [yY][eE][sS] | [yY])
@@ -572,11 +579,30 @@ install_ssr() {
     \n | . ${ssr_conf_dir}/shadowsocks-all.sh 2>&1 | tee shadowsocks-all.log
   fi
 }
+set_port() {
+    while true
+    do
+    dport=$(shuf -i 9000-19999 -n 1)
+    echo -e "${Info}请输入$1端口号 [1-65535],注意：如果安装了v2ray、caddy、trojan、ssr等服务，请不要与这些服务的端口号重复"
+    read -rp "(默认端口: ${dport}):" port
+    [ -z "$port" ] && port=${dport}
+    expr "$port" + 1 &>/dev/null
+    if [ $? -eq 0 ]; then
+        if [ "$port" -ge 1 ] && [ "$port" -le 65535 ] && [ "$port" != 0 ]; then
+            echo
+            echo -e "${Info}$1端口是：$port"
+            echo
+            break
+        fi
+    fi
+    echo -e "${Error} 请输入一个正确的端口[1-65535]"
+    done
+}
 nginx_trojan_conf() {
   touch ${nginx_conf_dir}/default.conf
   cat >${nginx_conf_dir}/default.conf <<EOF
   server {
-    listen 80;
+    listen ${webport};
     server_name ${domain};
     root ${web_dir};
 }
@@ -586,7 +612,7 @@ nginx_v2ray_conf() {
   touch ${nginx_conf_dir}/default.conf
   cat >${nginx_conf_dir}/default.conf <<EOF
   server {
-      listen 443 ssl http2;
+      listen ${webport} ssl http2;
       ssl_certificate       /data/${domain}/fullchain.crt;
       ssl_certificate_key   /data/${domain}/privkey.key;
       ssl_protocols         TLSv1.3;
@@ -610,12 +636,12 @@ nginx_v2ray_conf() {
   server {
       listen 80;
       server_name $domain;
-      # rewrite ^(.*) https://${domain} permanent;
+      # rewrite ^(.*) https://${domain}:${webport} permanent;
   }
 EOF
 }
 tls_type() {
-  if [[ -f "${nginx_bin_file_new}" ]] && [[ -f "${nginx_conf}" ]]; then
+  if [[ -f "${nginx_bin_file}" ]] && [[ -f "${nginx_conf}" ]]; then
     echo -e "${Tip}请选择支持的 TLS 版本（default:3）:"
     echo -e "${Tip}请注意,如果你使用 Quantaumlt X / 路由器 / 旧版 Shadowrocket 请选择 兼容模式"
     echo "1: TLS1.1 TLS1.2 and TLS1.3（兼容模式）"
@@ -649,12 +675,12 @@ tls_type() {
 }
 v2ray_conf() {
   uuid=$(cat /proc/sys/kernel/random/uuid)
-  read -p "$(echo -e "${Tip}已为您生成了uuid:${uuid},确认使用吗?[Y/n]?")" yn
+  read -rp "$(echo -e "${Tip}已为您生成了uuid:${uuid},确认使用吗?[Y/n]?")" yn
   while [[ "${yn}" != [Yy] ]]; do
     uuid=$(cat /proc/sys/kernel/random/uuid)
-    read -p "$(echo -e "${Tip}已为您生成了uuid:${uuid},确认使用吗?[Y/n]?")" yn
+    read -rp "$(echo -e "${Tip}已为您生成了uuid:${uuid},确认使用吗?[Y/n]?")" yn
   done
-  mkdir ${v2ray_conf_dir}
+  [[ ! -d "${v2ray_conf_dir}" ]] && mkdir ${v2ray_conf_dir}
   cat >${v2ray_conf} <<"_EOF"
 	  {
       "inbounds": [
@@ -765,10 +791,7 @@ caddy_v2ray_conf() {
   [[ ! -d ${caddy_conf_dir} ]] && mkdir ${caddy_conf_dir}
   touch ${caddy_conf}
   cat >${caddy_conf} <<_EOF
-http://${domain}:80 {
-    redir https://${domain}:443{url}
-   }
-https://${domain}:443 {
+https://${domain}:${webport} {
 gzip
 timeouts none
 tls /data/${domain}/fullchain.crt /data/${domain}/privkey.key {
@@ -786,12 +809,9 @@ caddy_trojan_conf() {
    [[ ! -d ${caddy_conf_dir} ]] && mkdir ${caddy_conf_dir}
   touch ${caddy_conf}
   cat >${caddy_conf} <<_EOF
-http://${domain} {
+http://${domain}:${webport} {
   gzip
   timeouts none
-  tls /data/${domain}/fullchain.crt /data/${domain}/privkey.key {
-       protocols tls1.0 tls1.3
-    }
   root ${web_dir}
 }
 _EOF
@@ -800,9 +820,6 @@ caddy_ssr_conf() {
    [[ ! -d ${caddy_conf_dir} ]] && mkdir ${caddy_conf_dir}
   touch ${caddy_conf}
   cat >${caddy_conf} <<_EOF
-http://${domain}:80 {
-redir https://${domain}:1234{url}
-       }
   https://${domain}:1234 {
   gzip
   timeouts none
@@ -814,22 +831,22 @@ redir https://${domain}:1234{url}
 _EOF
 }
 trojan_conf() {
-  read -p "$(echo -e "${Info}请输入您的trojan密码1:")" password1
+  read -rp "$(echo -e "${Info}请输入您的trojan密码1:")" password1
   while [[ -z ${password1} ]]; do
-    read -p "$(echo -e "${Tip}密码1不能为空,请重新输入您的trojan密码1:")" password1
+    read -rp "$(echo -e "${Tip}密码1不能为空,请重新输入您的trojan密码1:")" password1
   done
-  read -p "$(echo -e "${Info}请输入您的trojan密码2:")" password2
+  read -rp "$(echo -e "${Info}请输入您的trojan密码2:")" password2
   while [[ -z ${password2} ]]; do
-    read -p "$(echo -e "${Tip}密码2不能为空,请重新输入您的trojan密码2:")" password2
+    read -rp "$(echo -e "${Tip}密码2不能为空,请重新输入您的trojan密码2:")" password2
   done
   touch ${trojan_conf}
   cat >${trojan_conf} <<_EOF
   {
     "run_type": "server",
     "local_addr": "0.0.0.0",
-    "local_port": 443,
+    "local_port": ${trojanport},
     "remote_addr": "127.0.0.1",
-    "remote_port": 80,
+    "remote_port": ${webport},
     "password": [
         "${password1}",
         "${password2}"
@@ -892,7 +909,7 @@ ssr_conf() {
   {
     "server":"0.0.0.0",
     "server_ipv6":"::",
-    "server_port":443,
+    "server_port":${ssrport},
     "local_address":"127.0.0.1",
     "local_port":1080,
     "password":"${password}",
@@ -902,7 +919,7 @@ ssr_conf() {
     "protocol_param":"",
     "obfs":"tls1.2_ticket_auth",
     "obfs_param":"",
-    "redirect":["*:443#127.0.0.1:1234"],
+    "redirect":["*:${ssrport}#127.0.0.1:1234"],
     "dns_ipv6":false,
     "fast_open":true,
     "workers":1
@@ -938,8 +955,8 @@ tls_generate() {
     if "$HOME"/.acme.sh/acme.sh --issue -d "${domain}" --standalone -k ec-256 --force; then
         echo -e "${Info} TLS 证书生成成功 "
         sleep 2
-        [[ -d "/data" ]] && mkdir /data
-        [[ -d "/data/${domain}" ]] && mkdir /data/${domain}
+        [[ ! -d "/data" ]] && mkdir /data
+        [[ ! -d "/data/${domain}" ]] && mkdir "/data/${domain}"
         if "$HOME"/.acme.sh/acme.sh --installcert -d "${domain}" --fullchainpath /data/${domain}/fullchain.crt --keypath /data/${domain}/privkey.key --ecc --force; then
             echo -e "${Info}证书配置成功 "
             sleep 2
@@ -959,11 +976,13 @@ trojan_qr_config() {
   "uuid": "${uuid}"
   "password1": "${password1}"
   "password2": "${password2}"
+  "trojanport":"${trojanport}"
+  "webport":"${webport}"
 EOF
 }
 trojan_qr_link_image() {
-  trojan_link1="trojan://${password1}@${domain}:443"
-  trojan_link2="trojan://${password2}@${domain}:443"
+  trojan_link1="trojan://${password1}@${domain}:${trojanport}"
+  trojan_link2="trojan://${password2}@${domain}:${trojanport}"
   qrencode -o ${web_dir}/${uuid}-01.png -s 6 "${trojan_link1}"
   qrencode -o ${web_dir}/${uuid}-02.png -s 6 "${trojan_link2}"
   #tmp1=$(echo -n "${password1}" | base64 -w0 | sed 's/=//g;s/\//_/g;s/+/-/g')
@@ -993,9 +1012,10 @@ echo -e "
 ${GREEN}=========================trojan+tls 安装成功==============================
 ${FUCHSIA}=========================   Trojan 配置信息  =============================
 ${GREEN}地址：   $(trojan_info_extraction '\"domain\"')
-${GREEN}端口：   443
+${GREEN}端口：   $(trojan_info_extraction '\"trojanport\"')
 ${GREEN}密码1：  $(trojan_info_extraction '\"password1\"')
 ${GREEN}密码2：  $(trojan_info_extraction '\"password2\"')
+${GREEN}重启服务、修改密码、修改端口号、查看证书有效期等，请执行：/etc/all_mgr.sh
 ${FUCHSIA}=========================   分享链接和二维码  ===============================
 ${GREEN}分享链接1：
 ${trojan_link1}
@@ -1004,7 +1024,7 @@ ${trojan_link2}
 ${GREEN}二维码1：  ${web_dir}/${uuid}-01.png
 ${GREEN}二维码2：  ${web_dir}/${uuid}-02.png
 ${FUCHSIA}=========================   懒人请往这儿瞧  ===============================
-${GREEN}详细信息：https://${domain}/${uuid}.html${NO_COLOR}"
+${GREEN}详细信息：https://${domain}:${trojanport}/${uuid}.html${NO_COLOR}"
 } | tee /etc/motd
 }
 ssr_qr_config() {
@@ -1018,6 +1038,7 @@ ssr_qr_config() {
   "protocol": "$(ssr_info_extraction '\"protocol\"')",
   "method": "$(ssr_info_extraction '\"method\"')",
   "obfs": "$(ssr_info_extraction '\"obfs\"')",
+  "ssrport":"${ssrport}"
 }
 EOF
 }
@@ -1033,7 +1054,7 @@ ssr_qr_link_image(){
     method=$(ssr_info_extraction '\"method\"')
     obfs=$(ssr_info_extraction '\"obfs\"')
     tmp1=$(echo -n "${password}" | base64 -w0 | sed 's/=//g;s/\//_/g;s/+/-/g')
-    tmp2=$(echo -n "${domain}:443:${protocol}:${method}:${obfs}:${tmp1}/?obfsparam=" | base64 -w0)
+    tmp2=$(echo -n "${domain}:${ssrport}:${protocol}:${method}:${obfs}:${tmp1}/?obfsparam=" | base64 -w0)
     ssr_link="ssr://${tmp2}"
     qrencode -o ${web_dir}/${uuid}.png -s 8 "${ssr_link}"
 }
@@ -1052,17 +1073,18 @@ echo -e "
 ${GREEN}=========================ssr+tls 安装成功==============================
 ${FUCHSIA}=========================   SSR 配置信息  =============================
 ${GREEN}地址：   ${domain}
-${GREEN}端口：   443
+${GREEN}端口：   ${ssrport}
 ${GREEN}密码：  $(ssr_info_extraction '\"password\"')
 ${GREEN}加密方式：  $(ssr_info_extraction '\"method\"')
 ${GREEN}协议：  $(ssr_info_extraction '\"protocol\"')
 ${GREEN}混淆：  $(ssr_info_extraction '\"obfs\"')
+${GREEN}重启服务、修改密码、修改端口号、查看证书有效期等，请执行：/etc/all_mgr.sh
 ${FUCHSIA}=========================   分享链接和二维码  ===============================
 ${GREEN}分享链接：
 ${ssr_link}
 ${GREEN}二维码：  ${web_dir}/${uuid}.png
 ${FUCHSIA}=========================   懒人请往这儿瞧  ===============================
-${GREEN}详细信息：https://${domain}/${uuid}.html${NO_COLOR}"
+${GREEN}详细信息：https://${domain}:${ssrport}/${uuid}.html${NO_COLOR}"
 } | tee /etc/motd
 }
 v2ray_shadowrocket_qr_config() {
@@ -1072,7 +1094,7 @@ v2ray_shadowrocket_qr_config() {
   "v": "v2ray",
   "ps": "Jeannie_${domain}",
   "add": "${domain}",
-  "port": "443",
+  "port": "${webport}",
   "id": "${uuid}",
   "aid": "64",
   "net": "ws",
@@ -1090,7 +1112,7 @@ v2ray_win_and_android_qr_config() {
   "v": "v2ray",
   "ps": "Jeannie_${domain}",
   "add": "${domain}",
-  "port": "443",
+  "port": "${webport}",
   "id": "${uuid}",
   "aid": "64",
   "net": "ws",
@@ -1127,7 +1149,7 @@ v2ray_basic_information() {
 ${GREEN}=========================V2ray+ws+tls 安装成功==============================
 ${FUCHSIA}=========================   V2ray 配置信息   ===============================
 ${GREEN}地址(address):       $(v2ray_info_extraction '\"add\"')
-${GREEN}端口（port）：        443
+${GREEN}端口（port）：        ${webport}
 ${GREEN}用户id（UUID）：      $(v2ray_info_extraction '\"id\"')
 ${GREEN}额外id（alterId）：   64
 ${GREEN}加密方式（security）：自适应
@@ -1135,6 +1157,7 @@ ${GREEN}传输协议（network）： ws
 ${GREEN}伪装类型（type）：    none
 ${GREEN}路径（不要落下/）：   /ray/
 ${GREEN}底层传输安全：        tls
+${GREEN}重启服务、修改密码、修改端口号、查看证书有效期等，请执行：/etc/all_mgr.sh
 ${FUCHSIA}=========================   分享链接和二维码  ===============================
 ${GREEN}windows和安卓客户端v2rayN分享链接：
 ${BLUE}${v2ray_link2}
@@ -1145,7 +1168,7 @@ ${BLUE}${web_dir}/${uuid}-1.png
 ${GREEN}ios客户端shadowroket二维码：
 ${BLUE}${web_dir}/${uuid}-2.png
 ${FUCHSIA}=========================   懒人请往这儿瞧  ======================================
-${GREEN}https://$(v2ray_info_extraction '\"add\"')/${uuid}.html${NO_COLOR}"
+${GREEN}https://$(v2ray_info_extraction '\"add\"'):${webport}/${uuid}.html${NO_COLOR}"
   } | tee /etc/motd
 }
 download_all_mgr() {
@@ -1182,22 +1205,25 @@ install_trojan_nginx() {
   check_ssr_installed_status
   uninstall_ssr
   uninstall_web
-  port_used_check 80
-  port_used_check 443
   get_ip
   check_domain
   tls_generate_script_install
   tls_generate
   check_nginx_installed_status
-  uninstall_nginx
   install_nginx
   nginx_systemd
+  set_port nginx
+  webport=$port
+  port_used_check "${webport}"
   nginx_trojan_conf
   web_download
   systemctl restart nginx
   systemctl enable nginx
   check_trojan_installed_status
   install_trojan
+  set_port trojan
+  trojanport=$port
+  port_used_check "${trojanport}"
   trojan_conf
   systemctl restart trojan
   systemctl enable trojan
@@ -1224,8 +1250,6 @@ install_trojan_caddy() {
   check_ssr_installed_status
   uninstall_ssr
   uninstall_web
-  port_used_check 80
-  port_used_check 443
   get_ip
   check_domain
   tls_generate_script_install
@@ -1233,11 +1257,17 @@ install_trojan_caddy() {
   check_caddy_installed_status
   install_caddy
   install_caddy_service
+  set_port caddy
+  webport=$port
+  port_used_check "${webport}"
   caddy_trojan_conf
   web_download
-  caddy -service start
+  caddy -service restart
   check_trojan_installed_status
   install_trojan
+  set_port trojan
+  trojanport=$port
+  port_used_check "${trojanport}"
   trojan_conf
   systemctl restart trojan
   systemctl enable trojan
@@ -1264,16 +1294,16 @@ install_v2ray_nginx() {
   check_ssr_installed_status
   uninstall_ssr
   uninstall_web
-  port_used_check 80
-  port_used_check 443
   get_ip
   check_domain
   tls_generate_script_install
   tls_generate
   check_nginx_installed_status
-  uninstall_nginx
   install_nginx
   nginx_systemd
+  set_port nginx
+  webport=$port
+  port_used_check "${webport}"
   nginx_v2ray_conf
   tls_type
   web_download
@@ -1282,8 +1312,8 @@ install_v2ray_nginx() {
   check_v2ray_installed_status
   install_v2ray
   v2ray_conf
+  systemctl enable v2ray
   service v2ray restart
-  # systemctl enable v2ray
   v2ray_shadowrocket_qr_config
   v2ray_win_and_android_qr_config
   v2ray_shadowrocket_qr_link_image
@@ -1309,14 +1339,15 @@ install_v2ray_caddy() {
   check_ssr_installed_status
   uninstall_ssr
   uninstall_web
-  port_used_check 80
-  port_used_check 443
   get_ip
   check_domain
   tls_generate_script_install
   tls_generate
   check_caddy_installed_status
   install_caddy
+  set_port caddy
+  webport=$port
+  port_used_check "${webport}"
   caddy_v2ray_conf
   web_download
   install_caddy_service
@@ -1326,7 +1357,6 @@ install_v2ray_caddy() {
   v2ray_conf
   service v2ray restart
   systemctl enable v2ray
-  # systemctl enable v2ray
   v2ray_shadowrocket_qr_config
   v2ray_win_and_android_qr_config
   v2ray_shadowrocket_qr_link_image
@@ -1352,8 +1382,6 @@ install_ssr_caddy() {
   check_trojan_installed_status
   uninstall_trojan
   uninstall_web
-  port_used_check 80
-  port_used_check 443
   get_ip
   check_domain
   tls_generate_script_install
@@ -1366,6 +1394,9 @@ install_ssr_caddy() {
   caddy -service restart
   check_ssr_installed_status
   install_ssr
+  set_port ssr
+  ssrport=$port
+  port_used_check "${ssrport}"
   ssr_conf
   ssr_info_extraction
   ssr_qr_config
@@ -1388,7 +1419,6 @@ uninstall_all() {
   sys_cmd
   check_nginx_installed_status
   uninstall_nginx
-  uninstall_new_nginx
   check_trojan_installed_status
   uninstall_trojan
   check_ssr_installed_status
@@ -1399,13 +1429,12 @@ uninstall_all() {
   check_v2ray_installed_status
   uninstall_v2ray
   remove_mgr
+  remove_motd
   check_nginx_pid
   check_caddy_pid
   check_v2ray_pid
   check_ssr_pid
   check_trojan_pid
-  port_used_check 80
-  port_used_check 443
   echo -e "${Info}卸载完成，系统回到初始状态！"
 }
 main() {
