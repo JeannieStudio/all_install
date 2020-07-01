@@ -315,7 +315,7 @@ install_dependency() {
   else
     yum -y install bind-utils
   fi
-  sucess_or_fail "DNS工具包安装"
+  #sucess_or_fail "DNS工具包安装"
   ${cmd} -y install wget
   sucess_or_fail "wget包安装"
   ${cmd} -y install unzip
