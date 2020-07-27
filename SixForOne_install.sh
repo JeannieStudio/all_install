@@ -35,10 +35,10 @@ v2ray_conf_dir="/etc/v2ray"
 v2ray_conf="${v2ray_conf_dir}/config.json"
 v2ray_shadowrocket_qr_config_file="${v2ray_conf_dir}/shadowrocket_qrconfig.json"
 v2ray_win_and_android_qr_config_file="${v2ray_conf_dir}/win_and_android_qrconfig.json"
-caddy_bin_dir="/usr/local/bin"
+caddy_bin_dir="/usr/bin/caddy"
 caddy_conf_dir="/etc/caddy"
 caddy_conf="${caddy_conf_dir}/Caddyfile"
-caddy_systemd_file="/etc/systemd/system/caddy.service"
+caddy_systemd_file="/usr/lib/systemd/system/caddy.service"
 trojan_bin_dir="/usr/local/bin/trojan"
 trojan_conf_dir="/usr/local/etc/trojan"
 trojan_conf="${trojan_conf_dir}/config.json"
@@ -188,7 +188,7 @@ check_ssr_installed_status() {
   fi
 }
 check_caddy_installed_status() {
-  if [[ -d ${caddy_bin_dir} ]] && [[ -f ${caddy_systemd_file} ]] && [[ -d ${caddy_conf_dir} ]]; then
+  if [[ -d ${caddy_bin_dir} ]] && [[ -d ${caddy_conf} ]]; then
     echo -e "${Info}检测到您已经安装了Caddy!"
     caddy_install_flag="YES"
   fi
@@ -232,12 +232,14 @@ uninstall_v2ray() {
   fi
 }
 uninstall_caddy() {
-  if [[ -f ${caddy_bin_dir}/caddy ]] || [[ -f ${caddy_systemd_file} ]] || [[ -d ${caddy_conf_dir} ]] || [[ -f ${caddy_bin_dir}/caddy_old ]]; then
+  if [[ -f ${caddy_bin_dir} ]] ; then
     echo -e "${Info}开始卸载Caddy……"
-    [[ -f ${caddy_bin_dir}/caddy ]] && rm -f ${caddy_bin_dir}/caddy
-    [[ -f ${caddy_bin_dir}/caddy_old ]] && rm -f ${caddy_bin_dir}/caddy_old
-    [[ -d ${caddy_conf_dir} ]] && rm -rf ${caddy_conf_dir}
-    [[ -f ${caddy_systemd_file} ]] && rm -f ${caddy_systemd_file}
+    systemctl stop caddy.service
+     if [[ ${release} == "debian"||${release} == "ubuntu" ]]; then
+        apt remove --purge caddy
+     elif [[ ${release} == "centos" ]]; then
+        yum remove caddy -y
+     fi
     echo -e "${Info}Caddy卸载成功！"
   fi
 }
@@ -330,8 +332,8 @@ install_dependency() {
   sucess_or_fail "git安装"
   ${cmd} -y install lsof
   sucess_or_fail "lsof安装"
-  ${cmd} -y install firewalld
-  sucess_or_fail "firewalld安装"
+  #${cmd} -y install firewalld
+  #sucess_or_fail "firewalld安装"
   if [[ ${cmd} == "yum" ]]; then
     yum -y install crontabs
   else
@@ -354,7 +356,7 @@ install_dependency() {
   sucess_or_fail "编译工具包 安装"
 
   if [[ "${cmd}" == "yum" ]]; then
-      ${cmd} -y install pcre pcre-devel zlib-devel epel-release
+      ${cmd} -y install pcre pcre-devel zlib-devel epel-release dnf
   else
       ${cmd} -y install libpcre3 libpcre3-dev zlib1g-dev dbus
   fi
@@ -501,21 +503,42 @@ EOF
 }
 install_caddy() {
   if [[ ${caddy_install_flag} == "YES" ]]; then
-    read -p "$(echo -e "${Tip}检测到已经安装了caddy,是否重新安装（Y/n）?(默认：n)")" Yn
+    read -rp "$(echo -e "${Tip}检测到已经安装了caddy,是否重新安装（Y/n）?(默认：n)")" Yn
     [[ -z ${Yn} ]] && Yn="n"
     case ${Yn} in
     [yY][eE][sS] | [yY])
         echo -e "${Info}开始安装caddy……"
-        sleep 2
-        curl https://getcaddy.com | bash -s personal hook.service
+        if [[ ${release} == "debian"||${release} == "ubuntu" ]]; then
+          echo "deb [trusted=yes] https://apt.fury.io/caddy/ /" \
+             | tee -a /etc/apt/sources.list.d/caddy-fury.list
+          apt update
+          apt install caddy
+        elif [[ ${release} == "centos" ]]; then
+          yum install yum-plugin-copr
+          yum copr enable @caddy/caddy
+          yum install caddy
+        #elif [[ ${release} == "centos" ]]; then
+        #  dnf install 'dnf-command(copr)'
+        #  dnf copr enable @caddy/caddy
+        #  dnf install caddy
+        fi
         ;;
-    *)
+      *)
+        echo -e "${Info}跳过caddy安装……"
         ;;
     esac
   else
     echo -e "${Info}开始安装caddy……"
-    sleep 2
-    curl https://getcaddy.com | bash -s personal hook.service
+    if [[ ${release} == "debian"||${release} == "ubuntu" ]]; then
+      echo "deb [trusted=yes] https://apt.fury.io/caddy/ /" \
+         | tee -a /etc/apt/sources.list.d/caddy-fury.list
+      apt update
+      apt install caddy
+    elif [[ ${release} == "centos" ]]; then
+      yum install yum-plugin-copr -y
+      yum copr enable @caddy/caddy -y
+      yum install caddy -y
+    fi
   fi
 }
 install_caddy_service(){
@@ -788,45 +811,46 @@ web_download() {
   unzip -o -d ${web_dir} ${web_dir}/web.zip
 }
 caddy_v2ray_conf() {
-  [[ ! -d ${caddy_conf_dir} ]] && mkdir ${caddy_conf_dir}
-  touch ${caddy_conf}
   cat >${caddy_conf} <<_EOF
 https://${domain}:${webport} {
-gzip
-timeouts none
-tls /data/${domain}/fullchain.crt /data/${domain}/privkey.key {
-   protocols tls1.0 tls1.3
-}
-root ${web_dir}
-proxy /ray/ 127.0.0.1:10000 {
-       websocket
-       header_upstream -Origin
-    }
+  encode gzip
+  root * /usr/wwwroot
+  file_server
+  root * ${web_dir}
+  reverse_proxy /ray/ 127.0.0.1:10000 {
+      header_up Host {http.reverse_proxy.upstream.hostport}
+      header_up X-Real-IP {http.request.remote}
+      header_up X-Forwarded-For {http.request.remote}
+      header_up X-Forwarded-Port {http.request.port}
+      header_up X-Forwarded-Proto {http.request.scheme}
+      }
 }
 _EOF
 }
 caddy_trojan_conf() {
-   [[ ! -d ${caddy_conf_dir} ]] && mkdir ${caddy_conf_dir}
-  touch ${caddy_conf}
+  [[ ! -d ${caddy_conf_dir} ]] && mkdir ${caddy_conf_dir}
   cat >${caddy_conf} <<_EOF
 http://${domain}:${webport} {
-  gzip
-  timeouts none
-  root ${web_dir}
+  encode gzip
+  root * ${web_dir}
+  file_server
+  header X-Real-IP {http.request.remote.host}
+  header X-Forwarded-For {http.request.remote.host}
+  header X-Forwarded-Port {http.request.port}
+  header X-Forwarded-Proto {http.request.scheme}
 }
 _EOF
 }
 caddy_ssr_conf() {
-   [[ ! -d ${caddy_conf_dir} ]] && mkdir ${caddy_conf_dir}
-  touch ${caddy_conf}
   cat >${caddy_conf} <<_EOF
-  https://${domain}:1234 {
-  gzip
-  timeouts none
-  tls /data/${domain}/fullchain.crt /data/${domain}/privkey.key {
-       protocols tls1.0 tls1.3
-    }
-  root ${web_dir}
+http://${domain}:${webport} {
+  encode gzip
+  root * ${web_dir}
+  file_server
+  header X-Real-IP {http.request.remote.host}
+  header X-Forwarded-For {http.request.remote.host}
+  header X-Forwarded-Port {http.request.port}
+  header X-Forwarded-Proto {http.request.scheme}
 }
 _EOF
 }
@@ -1197,7 +1221,7 @@ install_trojan_nginx() {
   check_sys
   sys_cmd
   install_dependency
-  close_firewall
+  #close_firewall
   check_caddy_installed_status
   uninstall_caddy
   check_v2ray_installed_status
@@ -1234,6 +1258,7 @@ install_trojan_nginx() {
   remove_mgr
   download_all_mgr
   trojan_basic_information
+  echo "unset MAILCHECK">> /etc/profile
 }
 install_trojan_caddy() {
   set_SELINUX
@@ -1242,7 +1267,7 @@ install_trojan_caddy() {
   check_sys
   sys_cmd
   install_dependency
-  close_firewall
+  #close_firewall
   check_nginx_installed_status
   uninstall_nginx
   check_v2ray_installed_status
@@ -1256,13 +1281,14 @@ install_trojan_caddy() {
   tls_generate
   check_caddy_installed_status
   install_caddy
-  install_caddy_service
+  #install_caddy_service
   set_port caddy
   webport=$port
   port_used_check "${webport}"
   caddy_trojan_conf
   web_download
-  caddy -service restart
+  #caddy -service restart
+  systemctl restart caddy.service
   check_trojan_installed_status
   install_trojan
   set_port trojan
@@ -1278,6 +1304,7 @@ install_trojan_caddy() {
   remove_mgr
   download_all_mgr
   trojan_basic_information
+  echo "unset MAILCHECK">> /etc/profile
 }
 install_v2ray_nginx() {
   set_SELINUX
@@ -1286,7 +1313,7 @@ install_v2ray_nginx() {
   check_sys
   sys_cmd
   install_dependency
-  close_firewall
+  #close_firewall
   check_caddy_installed_status
   uninstall_caddy
   check_trojan_installed_status
@@ -1323,6 +1350,7 @@ install_v2ray_nginx() {
   remove_mgr
   download_all_mgr
   v2ray_basic_information
+  echo "unset MAILCHECK">> /etc/profile
 }
 install_v2ray_caddy() {
   set_SELINUX
@@ -1331,7 +1359,7 @@ install_v2ray_caddy() {
   check_sys
   sys_cmd
   install_dependency
-  close_firewall
+  #close_firewall
   check_nginx_installed_status
   uninstall_nginx
   check_trojan_installed_status
@@ -1350,8 +1378,9 @@ install_v2ray_caddy() {
   port_used_check "${webport}"
   caddy_v2ray_conf
   web_download
-  install_caddy_service
-  caddy -service restart
+  #install_caddy_service
+  #caddy -service restart
+  systemctl restart caddy.service
   check_v2ray_installed_status
   install_v2ray
   v2ray_conf
@@ -1366,6 +1395,7 @@ install_v2ray_caddy() {
   remove_mgr
   download_all_mgr
   v2ray_basic_information
+  echo "unset MAILCHECK">> /etc/profile
 }
 install_ssr_caddy() {
   set_SELINUX
@@ -1374,7 +1404,7 @@ install_ssr_caddy() {
   check_sys
   sys_cmd
   install_dependency
-  close_firewall
+  #close_firewall
   check_nginx_installed_status
   uninstall_nginx
   check_v2ray_installed_status
@@ -1390,8 +1420,9 @@ install_ssr_caddy() {
   install_caddy
   caddy_ssr_conf
   web_download
-  install_caddy_service
-  caddy -service restart
+  #install_caddy_service
+  #caddy -service restart
+  systemctl restart caddy.service
   check_ssr_installed_status
   install_ssr
   set_port ssr
@@ -1407,6 +1438,7 @@ install_ssr_caddy() {
   remove_mgr
   download_all_mgr
   ssr_basic_information
+  echo "unset MAILCHECK">> /etc/profile
 }
 install_bbr() {
   wget -N --no-check-certificate "https://raw.githubusercontent.com/chiakge/Linux-NetSpeed/master/tcp.sh"
