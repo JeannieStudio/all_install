@@ -31,10 +31,10 @@ v2ray_conf_dir="/etc/v2ray"
 v2ray_conf="${v2ray_conf_dir}/config.json"
 v2ray_shadowrocket_qr_config_file="${v2ray_conf_dir}/shadowrocket_qrconfig.json"
 v2ray_win_and_android_qr_config_file="${v2ray_conf_dir}/win_and_android_qrconfig.json"
-caddy_bin_dir="/usr/local/bin"
+caddy_bin_dir="/usr/bin/caddy"
 caddy_conf_dir="/etc/caddy"
 caddy_conf="${caddy_conf_dir}/Caddyfile"
-caddy_systemd_file="/etc/systemd/system/caddy.service"
+caddy_systemd_file="/usr/lib/systemd/system/caddy.service"
 trojan_bin_dir="/usr/local/bin/trojan"
 trojan_conf_dir="/usr/local/etc/trojan"
 trojan_conf="${trojan_conf_dir}/config.json"
@@ -377,11 +377,33 @@ ${GREEN}https://$(v2ray_info_extraction '\"add\"'):${webport}/${uuid}.html${NO_C
   } | tee /etc/motd
 }
 
-count_days(){
+trojan_count_days(){
   if [[ -f ${trojan_qr_config_file} ]]; then
     trojan_info_extraction
     output_trojan_information
-    end_time=$(echo | openssl s_client -servername "$domain" -connect "$domain":"${trojanport}" 2>/dev/null | openssl x509 -in /data/$domain/fullchain.crt -noout -dates |grep 'After'| awk -F '=' '{print $2}'| awk -F ' +' '{print $1,$2,$4 }' )
+    end_time=$(echo | openssl s_client -servername "$domain" -connect "$domain":"${webport}" 2>/dev/null | openssl x509 -in /data/$domain/fullchain.crt -noout -dates |grep 'After'| awk -F '=' '{print $2}'| awk -F ' +' '{print $1,$2,$4 }' )
+    end_times=$(date +%s -d "$end_time")
+    now_time=$(date +%s -d "$(date | awk -F ' +'  '{print $2,$3,$6}')")
+    RST=$(($((end_times-now_time))/(60*60*24)))
+    echo -e "${GREEN}证书有效期剩余天数为：${RST}${NO_COLOR}"
+  fi
+}
+v2ray_count_days(){
+  if [[ -f ${v2ray_win_and_android_qr_config_file} ]]; then
+    v2ray_info_extraction
+    output_v2ray_information
+    end_time=$(echo | openssl s_client -servername "$domain" -connect "$domain":"${webport}" 2>/dev/null | openssl x509 -in /data/$domain/fullchain.crt -noout -dates |grep 'After'| awk -F '=' '{print $2}'| awk -F ' +' '{print $1,$2,$4 }' )
+    end_times=$(date +%s -d "$end_time")
+    now_time=$(date +%s -d "$(date | awk -F ' +'  '{print $2,$3,$6}')")
+    RST=$(($((end_times-now_time))/(60*60*24)))
+    echo -e "${GREEN}证书有效期剩余天数为：${RST}${NO_COLOR}"
+  fi
+}
+ssr_count_days(){
+  if [[ -f ${trojan_qr_config_file} ]]; then
+    ssr_qr_info_extraction
+    output_ssr_information
+    end_time=$(echo | openssl s_client -servername "$domain" -connect "$domain":"${webport}" 2>/dev/null | openssl x509 -in /data/$domain/fullchain.crt -noout -dates |grep 'After'| awk -F '=' '{print $2}'| awk -F ' +' '{print $1,$2,$4 }' )
     end_times=$(date +%s -d "$end_time")
     now_time=$(date +%s -d "$(date | awk -F ' +'  '{print $2,$3,$6}')")
     RST=$(($((end_times-now_time))/(60*60*24)))
@@ -461,7 +483,7 @@ change_caddy_port(){
   v2ray_shadowrocket_qr_link_image
   v2ray_win_and_android_qr_link_image
   v2ray_info_html
-  caddy -service restart
+  systemctl restart caddy.service
   left_second ${webserver}
   v2ray_basic_information
 }
@@ -530,7 +552,7 @@ change_ssr_port(){
   ssr_qr_config
   ssr_basic_information
 }
-mgr(){
+main(){
   check_root
   if [[ -e "${nginx_bin_file}" ]] && [[ -e "${trojan_bin_dir}" ]]; then
       echo -e "
@@ -564,7 +586,7 @@ mgr(){
           5)systemctl restart nginx
             echo -e  "${GREEN}nginx服务启动${NO_COLOR}"
           ;;
-          6)count_days
+          6)trojan_count_days
           ;;
           7)echo -e "目前证书在 60 天以后会自动更新, 你无需任何操作. 今后有可能会缩短这个时间, 不过都是自动的, 你不用关心."
           ;;
@@ -577,7 +599,7 @@ mgr(){
             exit
           ;;
       esac
-  elif [[ -e "${caddy_bin_dir}/caddy" ]] && [[ -e "${trojan_bin_dir}" ]]; then
+  elif [[ -e "${caddy_bin_dir}" ]] && [[ -e "${trojan_bin_dir}" ]]; then
       echo -e "
       $FUCHSIA=========================================================
       ${GREEN}系统检测到您目前安装的是trojan+caddy+tls一键脚本
@@ -603,13 +625,13 @@ mgr(){
           3)webserver=trojan
             change_trojan_password
           ;;
-          4)caddy -service stop
+          4)systemctl stop caddy.service
             echo -e  "${GREEN}caddy服务停止${NO_COLOR}"
           ;;
-          5)caddy -service restart
+          5)systemctl restart caddy.service
             echo -e  "${GREEN}caddy服务启动${NO_COLOR}"
           ;;
-          6)count_days
+          6)trojan_count_days
           ;;
           7)echo -e "目前证书在 60 天以后会自动更新, 你无需任何操作. 今后有可能会缩短这个时间, 不过都是自动的, 你不用关心."
           ;;
@@ -656,7 +678,7 @@ mgr(){
           5)systemctl restart nginx
             echo -e  "${GREEN}nginx服务启动${NO_COLOR}"
           ;;
-          6)count_days
+          6)v2ray_count_days
           ;;
           7)echo -e "目前证书在 60 天以后会自动更新, 你无需任何操作. 今后有可能会缩短这个时间, 不过都是自动的, 你不用关心."
           ;;
@@ -672,7 +694,7 @@ mgr(){
             exit
           ;;
       esac
-  elif [[ -e "${caddy_bin_dir}/caddy" ]] && [[ -e "${v2ray_bin_dir}/v2ray" ]]; then
+  elif [[ -e "${caddy_bin_dir}" ]] && [[ -e "${v2ray_bin_dir}/v2ray" ]]; then
       echo -e "
       $FUCHSIA=======================================================
       ${GREEN}系统检测到您目前安装的是v2ray+caddy+tls一键脚本
@@ -700,13 +722,13 @@ mgr(){
           3)webserver=v2ray
             change_v2ray_uuid
           ;;
-          4)caddy -service stop
+          4)systemctl stop caddy.service
             echo -e  "${GREEN}caddy服务停止${NO_COLOR}"
           ;;
-          5)caddy -service restart
+          5)systemctl restart caddy.service
             echo -e  "${GREEN}caddy服务启动${NO_COLOR}"
           ;;
-          6)count_days
+          6)v2ray_count_days
           ;;
           7)echo -e "目前证书在 60 天以后会自动更新, 你无需任何操作. 今后有可能会缩短这个时间, 不过都是自动的, 你不用关心."
           ;;
@@ -723,7 +745,7 @@ mgr(){
           ;;
       esac
 
-  elif [[ -e "${caddy_bin_dir}/caddy" ]] && [[ -d "${ssr_bin_dir}" ]]; then
+  elif [[ -e "${caddy_bin_dir}" ]] && [[ -d "${ssr_bin_dir}" ]]; then
       echo -e "
       $FUCHSIA===================================================
       ${GREEN}系统检测到您目前安装的是ssr+caddy+tls一键脚本
@@ -749,13 +771,13 @@ mgr(){
           3)change_ssr_password
             /etc/init.d/shadowsocks-r restart
           ;;
-          4)caddy -service stop
+          4)systemctl stop caddy.service
             echo -e  "${GREEN}caddy服务停止${NO_COLOR}"
           ;;
-          5)caddy -service restart
+          5)systemctl restart caddy.service
             echo -e  "${GREEN}caddy服务启动${NO_COLOR}"
           ;;
-          6)count_days
+          6)ssr_count_days
           ;;
           7)echo -e "目前证书在 60 天以后会自动更新, 你无需任何操作. 今后有可能会缩短这个时间, 不过都是自动的, 你不用关心."
           ;;
@@ -770,4 +792,4 @@ mgr(){
       esac
   fi
 }
-mgr
+main
