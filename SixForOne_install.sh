@@ -855,13 +855,13 @@ http://${domain}:${webport} {
 _EOF
 }
 trojan_conf() {
-  read -rp "$(echo -e "${Info}请输入您的trojan密码1:")" password1
+  read -rp "$(echo -e "${Info}请输入您的trojan密码1,注意：密码只能是数字或大小写字母的组合")" password1
   while [[ -z ${password1} ]]; do
-    read -rp "$(echo -e "${Tip}密码1不能为空,请重新输入您的trojan密码1:")" password1
+    read -rp "$(echo -e "${Tip}密码1不能为空,请重新输入您的trojan密码1，注意：密码只能是数字或大小写字母的组合")" password1
   done
-  read -rp "$(echo -e "${Info}请输入您的trojan密码2:")" password2
+  read -rp "$(echo -e "${Info}请输入您的trojan密码2，注意：密码只能是数字或大小写字母的组合")" password2
   while [[ -z ${password2} ]]; do
-    read -rp "$(echo -e "${Tip}密码2不能为空,请重新输入您的trojan密码2:")" password2
+    read -rp "$(echo -e "${Tip}密码2不能为空,请重新输入您的trojan密码2，注意：密码只能是数字或大小写字母的组合")" password2
   done
   touch ${trojan_conf}
   cat >${trojan_conf} <<_EOF
