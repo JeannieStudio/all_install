@@ -38,7 +38,7 @@ nginx_systemd_file="/etc/systemd/system/nginx.service"
 caddy_bin_dir="/usr/local/bin"
 caddy_conf_dir="/etc/caddy"
 caddy_conf="${caddy_conf_dir}/Caddyfile"
-caddy_systemd_file="/etc/systemd/system/caddy.service"
+caddy_systemd_file="/usr/lib/systemd/system/caddy.service"
 nginx_version="1.18.0"
 openssl_version="1.1.1g"
 jemalloc_version="5.2.1"
@@ -210,7 +210,12 @@ check_domain() {
     esac
   done
 }
-
+check_caddy_installed_status() {
+  if [[ -d ${caddy_bin_dir} ]] && [[ -d ${caddy_conf} ]]; then
+    echo -e "${Info}检测到您已经安装了Caddy!"
+    caddy_install_flag="YES"
+  fi
+}
 uninstall_web() {
   [[ -d ${web_dir} ]] && rm -rf ${web_dir} && echo -e "${Info}开始删除伪装网站……" && echo -e "${Info}伪装网站删除成功！"
 }
@@ -393,19 +398,19 @@ download_install(){
   if [[ ! -f ${trojan_bin_dir}/trojan-go ]];then
       case  ${bit} in
       "x86_64")
-        wget --no-check-certificate -O ${trojan_bin_dir}/trojan-go-linux-amd64.zip "https://github.com/p4gefau1t/trojan-go/releases/download/v0.4.10/trojan-go-linux-amd64.zip"
+        wget --no-check-certificate -O ${trojan_bin_dir}/trojan-go-linux-amd64.zip "https://github.com/p4gefau1t/trojan-go/releases/download/v0.8.1/trojan-go-linux-amd64.zip"
         sucess_or_fail "trojan-go下载"
         unzip -o -d ${trojan_bin_dir} ${trojan_bin_dir}/trojan-go-linux-amd64.zip
         sucess_or_fail "trojan-go解压"
         ;;
       "i386" | "i686")
-        wget --no-check-certificate -O ${trojan_bin_dir}/trojan-go-linux-386.zip "https://github.com/p4gefau1t/trojan-go/releases/download/v0.4.10/trojan-go-linux-386.zip"
+        wget --no-check-certificate -O ${trojan_bin_dir}/trojan-go-linux-386.zip "https://github.com/p4gefau1t/trojan-go/releases/download/v0.8.1/trojan-go-linux-386.zip"
          sucess_or_fail "trojan-go下载"
         unzip -o -d ${trojan_bin_dir} ${trojan_bin_dir}/trojan-go-linux-386.zip
         sucess_or_fail "trojan-go解压"
         ;;
       "armv7l")
-        wget --no-check-certificate -O ${trojan_bin_dir}/trojan-go-linux-armv7.zip "https://github.com/p4gefau1t/trojan-go/releases/download/v0.4.10/trojan-go-linux-armv7.zip"
+        wget --no-check-certificate -O ${trojan_bin_dir}/trojan-go-linux-armv7.zip "https://github.com/p4gefau1t/trojan-go/releases/download/v0.8.1/trojan-go-linux-armv7.zip"
          sucess_or_fail "trojan-go下载"
         unzip -o -d ${trojan_bin_dir} ${trojan_bin_dir}/trojan-go-linux-armv7.zip
         sucess_or_fail "trojan-go解压"
@@ -431,14 +436,34 @@ trojan_go_qr_config(){
   "domain": "${domain}"
   "uuid": "${uuid}"
   "password": "${password}"
-  "obfuscation_password":"${obfuscation_password}"
   "websocket_status":"${websocket_status}"
-  "double_tls":"${double_tls}"
   "websocket_path":"${websocket_path}"
+  "mux_status":"${mux_status}"
+  "trojanport":"${trojanport}"
+  "webport":"${webport}"
 EOF
 }
 trojan_info_extraction() {
   grep "$1" ${trojan_conf_file} | awk -F '"' '{print $4}'
+}
+set_port() {
+    while true
+    do
+    dport=$(shuf -i 9000-19999 -n 1)
+    echo -e "${Info}请输入$1端口号 [1-65535],注意：如果安装了v2ray、caddy、trojan、ssr等服务，请不要与这些服务的端口号重复"
+    read -rp "(默认端口: ${dport}):" port
+    [ -z "$port" ] && port=${dport}
+    expr "$port" + 1 &>/dev/null
+    if [ $? -eq 0 ]; then
+        if [ "$port" -ge 1 ] && [ "$port" -le 65535 ] && [ "$port" != 0 ]; then
+            echo
+            echo -e "${Info}$1端口是：$port"
+            echo
+            break
+        fi
+    fi
+    echo -e "${Error} 请输入一个正确的端口[1-65535]"
+    done
 }
 trojan_go_conf(){
   [[ ! -d ${trojan_conf_dir} ]] && mkdir ${trojan_conf_dir}
@@ -448,19 +473,17 @@ trojan_go_conf(){
     read -rp "$(echo -e "${Tip}密码不能为空,请重新输入您的Trojan-go密码:")" password
   done
   cat >${trojan_conf_file} <<EOF
-{
+  {
   "run_type": "server",
   "local_addr": "0.0.0.0",
-  "local_port": 443,
+  "local_port": ${trojanport},
   "remote_addr": "127.0.0.1",
-  "remote_port": 80,
+  "remote_port": ${webport},
   "log_level": 1,
   "log_file": "",
-  "password": [
-       "${password}"
-  ],
-  "buffer_size": 32,
-  "dns": [],
+  "password": ["${password}"],
+  "disable_http_check": false,
+  "udp_timeout": 60,
   "ssl": {
     "verify": true,
     "verify_hostname": true,
@@ -468,7 +491,6 @@ trojan_go_conf(){
     "key": "/data/${domain}/privkey.key",
     "key_password": "",
     "cipher": "",
-    "cipher_tls13": "",
     "curves": "",
     "prefer_server_cipher": false,
     "sni": "",
@@ -478,17 +500,14 @@ trojan_go_conf(){
     "session_ticket": true,
     "reuse_session": true,
     "plain_http_response": "",
-    "fallback_port": 1234,
-    "fingerprint": "firefox",
-    "serve_plain_text": false
+    "fallback_addr": "",
+    "fallback_port": 0,
+    "fingerprint": "firefox"
   },
   "tcp": {
     "no_delay": true,
     "keep_alive": true,
-    "reuse_port": false,
-    "prefer_ipv4": false,
-    "fast_open": false,
-    "fast_open_qlen": 20
+    "prefer_ipv4": false
   },
   "mux": {
     "enabled": false,
@@ -502,27 +521,26 @@ trojan_go_conf(){
     "block": [],
     "default_policy": "proxy",
     "domain_strategy": "as_is",
-    "geoip": "./geoip.dat",
-    "geosite": "./geoip.dat"
+    "geoip": "$PROGRAM_DIR$/geoip.dat",
+    "geosite": "$PROGRAM_DIR$/geosite.dat"
   },
   "websocket": {
     "enabled": false,
     "path": "",
-    "hostname": "127.0.0.1",
-    "obfuscation_password": "",
-    "double_tls": false,
-    "ssl": {
-      "verify": true,
-      "verify_hostname": true,
-      "cert": "/data/${domain}/fullchain.crt",
-      "key": "/data/${domain}/privkey.key",
-      "key_password": "",
-      "prefer_server_cipher": false,
-      "sni": "",
-      "session_ticket": true,
-      "reuse_session": true,
-      "plain_http_response": ""
-    }
+    "host": ""
+  },
+  "shadowsocks": {
+    "enabled": false,
+    "method": "AES-128-GCM",
+    "password": ""
+  },
+  "transport_plugin": {
+    "enabled": false,
+    "type": "",
+    "command": "",
+    "plugin_option": "",
+    "arg": [],
+    "env": []
   },
   "forward_proxy": {
     "enabled": false,
@@ -540,16 +558,17 @@ trojan_go_conf(){
     "password": "",
     "check_rate": 60
   },
-  "redis": {
-    "enabled": false,
-    "server_addr": "localhost",
-    "server_port": 6379,
-    "password": ""
-  },
   "api": {
     "enabled": false,
     "api_addr": "",
-    "api_port": 0
+    "api_port": 0,
+    "ssl": {
+      "enabled": false,
+      "key": "",
+      "cert": "",
+      "verify_client": false,
+      "client_cert": []
+    }
   }
 }
 EOF
@@ -561,16 +580,14 @@ trojan_client_conf(){
   {
   "run_type": "client",
   "local_addr": "127.0.0.1",
-  "local_port": 1080,
+  "local_port": ${trojanport},
   "remote_addr": "${domain}",
-  "remote_port": 443,
+  "remote_port": ${webport},
   "log_level": 1,
   "log_file": "",
-  "password": [
-    "${password}"
-  ],
-  "buffer_size": 32,
-  "dns": [],
+   "password": ["${password}"],
+  "disable_http_check": false,
+  "udp_timeout": 60,
   "ssl": {
     "verify": true,
     "verify_hostname": true,
@@ -578,7 +595,6 @@ trojan_client_conf(){
     "key": "/data/${domain}/privkey.key",
     "key_password": "",
     "cipher": "",
-    "cipher_tls13": "",
     "curves": "",
     "prefer_server_cipher": false,
     "sni": "",
@@ -588,17 +604,14 @@ trojan_client_conf(){
     "session_ticket": true,
     "reuse_session": true,
     "plain_http_response": "",
-    "fallback_port": 1234,
-    "fingerprint": "firefox",
-    "serve_plain_text": false
+    "fallback_addr": "",
+    "fallback_port": 0,
+    "fingerprint": "firefox"
   },
   "tcp": {
     "no_delay": true,
     "keep_alive": true,
-    "reuse_port": false,
-    "prefer_ipv4": false,
-    "fast_open": false,
-    "fast_open_qlen": 20
+    "prefer_ipv4": false
   },
   "mux": {
     "enabled": false,
@@ -612,27 +625,26 @@ trojan_client_conf(){
     "block": [],
     "default_policy": "proxy",
     "domain_strategy": "as_is",
-    "geoip": "./geoip.dat",
-    "geosite": "./geoip.dat"
+    "geoip": "$PROGRAM_DIR$/geoip.dat",
+    "geosite": "$PROGRAM_DIR$/geosite.dat"
   },
   "websocket": {
     "enabled": false,
     "path": "",
-    "hostname": "127.0.0.1",
-    "obfuscation_password": "",
-    "double_tls": false,
-    "ssl": {
-      "verify": true,
-      "verify_hostname": true,
-      "cert": "/data/${domain}/fullchain.crt",
-      "key": "/data/${domain}/privkey.key",
-      "key_password": "",
-      "prefer_server_cipher": false,
-      "sni": "",
-      "session_ticket": true,
-      "reuse_session": true,
-      "plain_http_response": ""
-    }
+    "host": ""
+  },
+  "shadowsocks": {
+    "enabled": false,
+    "method": "AES-128-GCM",
+    "password": ""
+  },
+  "transport_plugin": {
+    "enabled": false,
+    "type": "",
+    "command": "",
+    "plugin_option": "",
+    "arg": [],
+    "env": []
   },
   "forward_proxy": {
     "enabled": false,
@@ -650,16 +662,17 @@ trojan_client_conf(){
     "password": "",
     "check_rate": 60
   },
-  "redis": {
-    "enabled": false,
-    "server_addr": "localhost",
-    "server_port": 6379,
-    "password": ""
-  },
   "api": {
     "enabled": false,
     "api_addr": "",
-    "api_port": 0
+    "api_port": 0,
+    "ssl": {
+      "enabled": false,
+      "key": "",
+      "cert": "",
+      "verify_client": false,
+      "client_cert": []
+    }
   }
 }
 EOF
@@ -738,31 +751,34 @@ web_download() {
   unzip -o -d ${web_dir} ${web_dir}/web.zip
 }
 open_websocket(){
-  echo -e "${Info}是否启用websocket协议?注意：开启这个选项不会改善你的链路速度（甚至有可能下降）"
   echo -e "${Info}如果启用了websocket协议,您就可以开启CDN了，如果用cloudflare解析域名的，搭建完成后可以点亮小云彩了。"
   read -rp "$(echo -e "${Info}是否开启（Y/n）？（默认：n）")" Yn
     case ${Yn} in
     [yY][eE][sS] | [yY])
-        sed -i "59c    \"enabled\": true," ${trojan_conf_file}
-        sed -i "59c    \"enabled\": true," ${web_dir}/"${uuid}".json
-        sed -i "60c    \"path\": \"/trojan\"," ${trojan_conf_file}
-        sed -i "60c    \"path\": \"/trojan\"," ${web_dir}/"${uuid}".json
+        sed -i "53c    \"enabled\": true," ${trojan_conf_file}
+        sed -i "53c    \"enabled\": true," ${web_dir}/"${uuid}".json
+        sed -i "54c    \"path\": \"/trojan\"," ${trojan_conf_file}
+        sed -i "54c    \"path\": \"/trojan\"," ${web_dir}/"${uuid}".json
         websocket_path="/trojan"
         websocket_status="开启"
-        echo -e "${Info}如果您准备使用的国内CDN,为降低遭到国内无良CDN运营商识别的概率，请输入混淆密码"
-        echo -e "${Info}设置了混淆密码对性能有一定影响，请自行斟酌安全性和性能的平衡，默认为空"
-        read -rp "$(echo -e "请输入混淆密码：")" obfuscation_password
-        sed -i "62c \"obfuscation_password\": \"${obfuscation_password}\"," ${trojan_conf_file}
-        sed -i "62c \"obfuscation_password\": \"${obfuscation_password}\"," ${web_dir}/${uuid}.json
-        sed -i "63c \"double_tls\": true," ${trojan_conf_file}
-        sed -i "63c \"double_tls\": true," ${web_dir}/${uuid}.json
-        double_tls="开启"
         ;;
     *)
         websocket_status="关闭"
-        double_tls="关闭"
         websocket_path=""
-        obfuscation_password=""
+        ;;
+    esac
+}
+open_mux(){
+  echo -e "${Info}是否启用多路复用?注意：开启这个选项不会改善你的链路速度（甚至有可能下降）"
+  read -rp "$(echo -e "${Info}是否开启（Y/n）？（默认：n）")" Yn
+    case ${Yn} in
+    [yY][eE][sS] | [yY])
+        sed -i "38c    \"enabled\": true," ${trojan_conf_file}
+        sed -i "38c    \"enabled\": true," ${web_dir}/"${uuid}".json
+        mux_status="开启"
+        ;;
+    *)
+        mux_status="关闭"
         ;;
     esac
 }
@@ -772,74 +788,100 @@ echo -e "
 ${GREEN}=========================Trojan-go+tls 安装成功==============================
 ${FUCHSIA}=========================   Trojan-go 配置信息  =============================
 ${GREEN}地址：              ${domain}
-${GREEN}端口：              443
+${GREEN}端口：              ${trojanport}
 ${GREEN}密码：              ${password}
 ${GREEN}websocket状态：     ${websocket_status}
 ${GREEN}websocket路径：     ${websocket_path}
-${GREEN}websocket多重TLS：  ${double_tls}
-${GREEN}混淆密码：        ${obfuscation_password}
-${FUCHSIA}=========================   客户端配置文件  ===============================
-${GREEN}详细信息：https://${domain}/${uuid}.html${NO_COLOR}"
+${GREEN}多路复用：          ${mux_status}
+${FUCHSIA}=========================   客户端配置文件  ==========================================
+${GREEN}详细信息: https://${domain}:${webport}/${uuid}.html${NO_COLOR}"
 } | tee /etc/motd
 }
 
 nginx_trojan_conf() {
-  touch ${nginx_conf_dir}/default.conf
-  cat >${nginx_conf_dir}/default.conf <<EOF
-  server {
-    listen 80;
-    server_name ${domain};
-    root ${web_dir};
-}
+   cat >/etc/nginx/conf/conf.d/default.conf <<EOF
+    server {
+      listen ${webport};
+      server_name ${domain};
+      root ${web_dir};
+      ssl on;
+      ssl_certificate       /data/${domain}/fullchain.crt;
+      ssl_certificate_key   /data/${domain}/privkey.key;
+      ssl_ciphers                 TLS13-AES-256-GCM-SHA384:TLS13-CHACHA20-POLY1305-SHA256:TLS13-AES-128-GCM-SHA256:TLS13-AES-128-CCM-8-SHA256:TLS13-AES-128-CCM-SHA256:EECDH+CHACHA20:EECDH+CHACHA20-draft:EECDH+ECDSA+AES128:EECDH+aRSA+AES128:RSA+AES128:EECDH+ECDSA+AES256:EECDH+aRSA+AES256:RSA+AES256:EECDH+ECDSA+3DES:EECDH+aRSA+3DES:RSA+3DES:!MD5;
+      ssl_prefer_server_ciphers    on;
+      ssl_protocols                TLSv1 TLSv1.1 TLSv1.2 TLSv1.3;
+      ssl_session_cache            shared:SSL:50m;
+      ssl_session_timeout          1d;
+      ssl_session_tickets          on;
+  }
 EOF
 }
+
 install_caddy() {
-  if [[ -d ${caddy_bin_dir} ]] && [[ -f ${caddy_systemd_file} ]] && [[ -d ${caddy_conf_dir} ]]; then
-    read -rp "$(echo -e "${Tip}检测到已经安装了caddy,是否重新安装（Y/n）?(默认：n)")" Yn
-    [[ -z ${Yn} ]] && Yn="n"
-    case ${Yn} in
-    [yY][eE][sS] | [yY])
-        echo -e "${Info}开始安装caddy……"
-        sleep 2
-        curl https://getcaddy.com | bash -s personal hook.service
-        ;;
-    *)
-        ;;
-    esac
-  else
     echo -e "${Info}开始安装caddy……"
-    sleep 2
-    curl https://getcaddy.com | bash -s personal hook.service
-  fi
+    if [[ ${release} == "debian"||${release} == "ubuntu" ]]; then
+      echo "deb [trusted=yes] https://apt.fury.io/caddy/ /" \
+         | tee -a /etc/apt/sources.list.d/caddy-fury.list
+      apt update
+      apt install caddy
+    elif [[ ${release} == "centos" ]]; then
+      yum install yum-plugin-copr -y
+      yum copr enable @caddy/caddy -y
+      yum install caddy -y
+    fi
 }
 install_caddy_service(){
   echo -e "${Info}开始安装caddy后台管理服务……"
-  rm -f ${caddy_systemd_file}
-  #if [[ ${email} == "" ]]; then
-  #  read -p "$(echo -e "${Info}请填写您的邮箱：")" email
-  #  read -p "$(echo -e "${Info}邮箱输入正确吗（Y/n）？（默认：n）")" Yn
-  #  [[ -z ${Yn} ]] && Yn="n"
-  #  while [[ ${Yn} != "Y" ]] && [[ ${Yn} != "y" ]]; do
-  #      read -p "$(echo -e "${Tip}重新填写您的邮箱：")" email
-  #      read -p "$(echo -e "${Info}邮箱输入正确吗（Y/n）？（默认：n）")" Yn
-  #      [[ -z ${Yn} ]] && Yn="n"
-  #  done
- #fi
- #caddy -service install -agree -email "${email}" -conf "${caddy_conf}"
- caddy -service install -agree -email "example@gmail.com" -conf "${caddy_conf}"
+  cat >${caddy_systemd_file} <<EOF
+    # caddy.service
+#
+# For using Caddy with a config file.
+#
+# Make sure the ExecStart and ExecReload commands are correct
+# for your installation.
+#
+# See https://caddyserver.com/docs/install for instructions.
+#
+# WARNING: This service does not use the --resume flag, so if you
+# use the API to make changes, they will be overwritten by the
+# Caddyfile next time the service is restarted. If you intend to
+# use Caddy's API to configure it, add the --resume flag to the
+# `caddy run` command or use the caddy-api.service file instead.
+
+[Unit]
+Description=Caddy
+Documentation=https://caddyserver.com/docs/
+After=network.target
+
+[Service]
+User=root
+Group=root
+ExecStart=/usr/bin/caddy run --environ --config /etc/caddy/Caddyfile
+ExecReload=/usr/bin/caddy reload --config /etc/caddy/Caddyfile
+TimeoutStopSec=5s
+LimitNOFILE=1048576
+LimitNPROC=512
+PrivateTmp=true
+ProtectSystem=full
+AmbientCapabilities=CAP_NET_BIND_SERVICE
+
+[Install]
+WantedBy=multi-user.target
+EOF
  sucess_or_fail "caddy后台管理服务安装"
 }
+
 caddy_trojan_conf() {
-   [[ ! -d ${caddy_conf_dir} ]] && mkdir ${caddy_conf_dir}
-  touch ${caddy_conf}
   cat >${caddy_conf} <<_EOF
-http://${domain}:80 {
-  gzip
-  timeouts none
-  tls /data/${domain}/fullchain.crt /data/${domain}/privkey.key {
-       protocols tls1.0 tls1.3
-    }
-  root ${web_dir}
+${domain}:${webport} {
+  encode gzip
+  root * ${web_dir}
+  file_server
+  tls /data/${domain}/fullchain.crt /data/${domain}/privkey.key
+  header X-Real-IP {http.request.remote.host}
+  header X-Forwarded-For {http.request.remote.host}
+  header X-Forwarded-Port {http.request.port}
+  header X-Forwarded-Proto {http.request.scheme}
 }
 _EOF
 }
@@ -894,50 +936,48 @@ trojan_nginx_install(){
   check_sys
   sys_cmd
   sucess_or_fail
-  #GCE_debian10
   install_dependency
-  #close_firewall
-  download_install
-  port_used_check 80
-  port_used_check 443
   uninstall_web
   remove_trojan_mgr
+  check_caddy_installed_status
   uninstall_caddy
   get_ip
   check_domain
   tls_generate_script_install
   tls_generate
   web_download
-  #generate_trojan_go_tls
-  trojan_go_conf
-  trojan_client_conf
-  open_websocket
-  trojan_go_qr_config
   install_nginx
   nginx_systemd
+  systemctl daemon-reload
+  set_port nginx
+  webport=$port
+  port_used_check "${webport}"
   nginx_trojan_conf
   systemctl restart nginx
   systemctl enable nginx
+  download_install
+  set_port trojan
+  trojanport=$port
+  port_used_check "${trojanport}"
+  trojan_go_conf
+  trojan_client_conf
+  open_websocket
+  open_mux
+  trojan_go_qr_config
   trojan_go_info_html
   trojan_go_systemd
-  systemctl start trojan.service
+  systemctl restart trojan.service
 	systemctl enable trojan.service
 	download_trojan_mgr
   trojan_go_basic_information
 }
 trojan_caddy_install(){
   check_root
-  # shellcheck disable=SC2164
-  cd /root
   set_SELINUX
   check_sys
   sys_cmd
   sucess_or_fail
   install_dependency
-  #close_firewall
-  download_install
-  port_used_check 80
-  port_used_check 443
   uninstall_web
   remove_trojan_mgr
   uninstall_nginx
@@ -946,18 +986,26 @@ trojan_caddy_install(){
   tls_generate_script_install
   tls_generate
   web_download
-  #generate_trojan_go_tls
+  install_caddy
+  install_caddy_service
+  systemctl daemon-reload
+  set_port caddy
+  webport=$port
+  port_used_check "${webport}"
+  caddy_trojan_conf
+  systemctl restart caddy.service
+  download_install
+  set_port trojan
+  trojanport=$port
+  port_used_check "${trojanport}"
   trojan_go_conf
   trojan_client_conf
   open_websocket
+  open_mux
   trojan_go_qr_config
-  install_caddy
-  install_caddy_service
-  caddy_trojan_conf
-  caddy -service start
   trojan_go_info_html
   trojan_go_systemd
-  systemctl start trojan.service
+  systemctl restart trojan.service
 	systemctl enable trojan.service
 	download_trojan_mgr
   trojan_go_basic_information
