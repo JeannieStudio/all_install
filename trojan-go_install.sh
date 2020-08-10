@@ -992,7 +992,7 @@ trojan_caddy_install(){
   tls_generate
   web_download
   install_caddy
-  install_caddy_service
+  #install_caddy_service
   systemctl daemon-reload
   set_port caddy
   webport=$port
