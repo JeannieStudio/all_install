@@ -833,7 +833,7 @@ install_caddy() {
 install_caddy_service(){
   echo -e "${Info}开始安装caddy后台管理服务……"
   cat >${caddy_systemd_file} <<EOF
-    # caddy.service
+# caddy.service
 #
 # For using Caddy with a config file.
 #
@@ -886,12 +886,10 @@ ${domain}:${webport} {
 _EOF
 }
 uninstall_caddy() {
-  if [[ -f ${caddy_bin_dir}/caddy ]] || [[ -f ${caddy_systemd_file} ]] || [[ -d ${caddy_conf_dir} ]] || [[ -f ${caddy_bin_dir}/caddy_old ]]; then
+  if [[ -f ${caddy_bin_dir} ]] || [[ -f ${caddy_systemd_file} ]] || [[ -d ${caddy_conf_dir} ]] ; then
     echo -e "${Info}开始卸载Caddy……"
-    [[ -f ${caddy_bin_dir}/caddy ]] && rm -f ${caddy_bin_dir}/caddy
-    [[ -f ${caddy_bin_dir}/caddy_old ]] && rm -f ${caddy_bin_dir}/caddy_old
+    [[ -f ${caddy_bin_dir} ]] && rm -f ${caddy_bin_dir}
     [[ -d ${caddy_conf_dir} ]] && rm -rf ${caddy_conf_dir}
-    [[ -f ${caddy_systemd_file} ]] && rm -f ${caddy_systemd_file}
     echo -e "${Info}Caddy卸载成功！"
   fi
 }
