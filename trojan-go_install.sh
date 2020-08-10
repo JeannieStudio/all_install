@@ -868,8 +868,6 @@ AmbientCapabilities=CAP_NET_BIND_SERVICE
 [Install]
 WantedBy=multi-user.target
 EOF
-systemctl daemon-reload
-systemctl restart caddy.server
  sucess_or_fail "caddy后台管理服务安装"
 
 }
@@ -992,7 +990,7 @@ trojan_caddy_install(){
   tls_generate
   web_download
   install_caddy
-  #install_caddy_service
+  install_caddy_service
   systemctl daemon-reload
   set_port caddy
   webport=$port
