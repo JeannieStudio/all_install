@@ -832,7 +832,6 @@ install_caddy() {
 }
 install_caddy_service(){
   echo -e "${Info}开始安装caddy后台管理服务……"
-  systemctl stop caddy.service
   cat >${caddy_systemd_file} <<EOF
 # caddy.service
 #
