@@ -131,48 +131,60 @@ get_info(){
   domain=$(trojan_info_extraction '\"domain\"')
   uuid=$(trojan_info_extraction '\"uuid\"')
   password=$(trojan_info_extraction '\"password\"')
-  obfuscation_password=$(trojan_info_extraction '\"obfuscation_password\"')
   websocket_status=$(trojan_info_extraction '\"websocket_status\"')
-  double_tls=$(trojan_info_extraction '\"double_tls\"')
   websocket_path=$(trojan_info_extraction '\"websocket_path\"')
+  mux_status=$(trojan_info_extraction '\"mux_status\"')
+  trojanport=$(trojan_info_extraction '\"trojanport\"')
+  webport=$(trojan_info_extraction '\"webport\"')
 }
 update_trojan_info(){
   sed -i "s|\"password\":.*|\"password\": \"${password}\"|" ${trojan_qr_config_file}
   sed -i "s|\"websocket_status\":.*|\"websocket_status\": \"${websocket_status}\"|" ${trojan_qr_config_file}
-  sed -i "s|\"obfuscation_password\":.*|\"obfuscation_password\": \"${obfuscation_password}\"|" ${trojan_qr_config_file}
-  sed -i "s|\"double_tls\":.*|\"double_tls\": \"${double_tls}\"|" ${trojan_qr_config_file}
   sed -i "s|\"websocket_path\":.*|\"websocket_path\": \"${websocket_path}\"|" ${trojan_qr_config_file}
+  sed -i "s|\"mux_status\":.*|\"mux_status\": \"${mux_status}\"|" ${trojan_qr_config_file}
+  sed -i "s|\"trojanport\":.*|\"trojanport\": \"${trojanport}\"|" ${trojan_qr_config_file}
 }
 open_websocket(){
   if [[ ${websocket_status} == "开启" ]]; then
     echo -e "${Info}websocket已处于开启状态，无需再开启了！"
     exit 1
   else
-    echo -e "${Info}是否启用websocket协议?注意：开启这个选项不会改善你的链路速度（甚至有可能下降）"
     echo -e "${Info}如果启用了websocket协议,您就可以开启CDN了，如果用cloudflare解析域名的，搭建完成后可以点亮小云彩了。"
     read -rp "$(echo -e "${Info}是否开启（Y/n）？（默认：n）")" Yn
       case ${Yn} in
       [yY][eE][sS] | [yY])
-          sed -i "59c    \"enabled\": true," ${trojan_conf_file}
-          sed -i "59c    \"enabled\": true," ${web_dir}/"${uuid}".json
-          sed -i "60c    \"path\": \"/trojan\"," ${trojan_conf_file}
-          sed -i "60c    \"path\": \"/trojan\"," ${web_dir}/"${uuid}".json
+          sed -i "53c    \"enabled\": true," ${trojan_conf_file}
+          sed -i "53c    \"enabled\": true," ${web_dir}/"${uuid}".json
+          sed -i "54c    \"path\": \"/trojan\"," ${trojan_conf_file}
+          sed -i "54c    \"path\": \"/trojan\"," ${web_dir}/"${uuid}".json
           websocket_path="/trojan"
           websocket_status="开启"
-          echo -e "${Info}如果您准备使用的国内CDN,为降低遭到国内无良CDN运营商识别的概率，请输入混淆密码"
-          echo -e "${Info}设置了混淆密码对性能有一定影响，请自行斟酌安全性和性能的平衡，默认为空"
-          read -rp "$(echo -e "${Info}请输入混淆密码：")" obfuscation_password
-          sed -i "62c \"obfuscation_password\": \"${obfuscation_password}\"," ${trojan_conf_file}
-          sed -i "62c \"obfuscation_password\": \"${obfuscation_password}\"," ${web_dir}/"${uuid}".json
-          sed -i "63c \"double_tls\": true," ${trojan_conf_file}
-          sed -i "63c \"double_tls\": true," ${web_dir}/"${uuid}".json
-          double_tls="开启"
           ;;
       *)
         echo -e "${Info}什么也没做……"
         exit 1
           ;;
       esac
+  fi
+}
+open_mux(){
+   if [[ ${mux_status} == "开启" ]]; then
+    echo -e "${Info}多路复用已处于开启状态，无需再开启了！"
+    exit 1
+  else
+  echo -e "${Info}是否启用多路复用?注意：开启这个选项不会改善你的链路速度（甚至有可能下降）"
+  read -rp "$(echo -e "${Info}是否开启（Y/n）？（默认：n）")" Yn
+    case ${Yn} in
+    [yY][eE][sS] | [yY])
+        sed -i "38c    \"enabled\": true," ${trojan_conf_file}
+        sed -i "38c    \"enabled\": true," ${web_dir}/"${uuid}".json
+        mux_status="开启"
+        ;;
+    *)
+      echo -e "${Info}什么也没做……"
+      exit 1
+        ;;
+    esac
   fi
 }
 close_websocket(){
@@ -184,18 +196,31 @@ close_websocket(){
   read -rp "$(echo -e "${Info}是否禁用（Y/n）？（默认：n）")" Yn
     case ${Yn} in
     [yY][eE][sS] | [yY])
-        sed -i "59c \"enabled\": false," ${trojan_conf_file}
-        sed -i "59c \"enabled\": false," ${web_dir}/${uuid}.json
-        sed -i "60c    \"path\": \"\"," ${trojan_conf_file}
-        sed -i "60c    \"path\": \"\"," ${web_dir}/"${uuid}".json
-        sed -i "62c \"obfuscation_password\": \"\"," ${trojan_conf_file}
-        sed -i "62c \"obfuscation_password\": \"\"," ${web_dir}/${uuid}.json
-        sed -i "63c \"double_tls\": false," ${trojan_conf_file}
-        sed -i "63c \"double_tls\": false," ${web_dir}/${uuid}.json
+        sed -i "53c \"enabled\": false," ${trojan_conf_file}
+        sed -i "53c \"enabled\": false," ${web_dir}/${uuid}.json
+        sed -i "54c    \"path\": \"\"," ${trojan_conf_file}
+        sed -i "54c    \"path\": \"\"," ${web_dir}/"${uuid}".json
         websocket_status="关闭"
-        double_tls="关闭"
         websocket_path=""
-        obfuscation_password=""
+        ;;
+    *)
+        echo -e "${Info}什么也没做……"
+        exit 1
+        ;;
+    esac
+  fi
+}
+close_mux(){
+  if [[ ${mux_status} == "关闭" ]]; then
+    echo -e "${Info}多路复用已处于禁用，无需再禁用了！"
+    exit 1
+  else
+  read -rp "$(echo -e "${Info}是否禁用（Y/n）？（默认：n）")" Yn
+    case ${Yn} in
+    [yY][eE][sS] | [yY])
+        sed -i "38c    \"enabled\": true," ${trojan_conf_file}
+        sed -i "38c    \"enabled\": true," ${web_dir}/"${uuid}".json
+        mux_status="关闭"
         ;;
     *)
         echo -e "${Info}什么也没做……"
@@ -230,6 +255,61 @@ change_password(){
         ;;
     esac
 }
+set_port() {
+    while true
+    do
+    dport=$(shuf -i 9000-19999 -n 1)
+    echo -e "${Info}请输入$1端口号 [1-65535],注意：如果安装了v2ray、caddy、trojan、ssr等服务，请不要与这些服务的端口号重复"
+    read -rp "(默认端口: ${dport}):" port
+    [ -z "$port" ] && port=${dport}
+    expr "$port" + 1 &>/dev/null
+    if [ $? -eq 0 ]; then
+        if [ "$port" -ge 1 ] && [ "$port" -le 65535 ] && [ "$port" != 0 ]; then
+            echo
+            echo -e "${Info}$1端口是：$port"
+            echo
+            break
+        fi
+    fi
+    echo -e "${Error} 请输入一个正确的端口[1-65535]"
+    done
+}
+port_used_check() {
+    if [[ 0 -eq $(lsof -i:"$1" | grep -i -c "listen") ]]; then
+        echo -e "${Info} $1 端口未被占用"
+        sleep 1
+    else
+        echo -e "${Error}检测到 $1 端口被占用，以下为 $1 端口占用信息 ${Font}"
+        lsof -i:"$1"
+        echo -e "${Info} 5s 后将尝试自动 kill 占用进程 "
+        sleep 5
+        lsof -i:"$1" | awk '{print $2}' | grep -v "PID" | xargs kill -9
+        echo -e "${Info} kill 完成"
+        sleep 1
+    fi
+}
+change_trojan_port(){
+  read -rp "$(echo -e "${Info}是否修改trojan端口（Y/n）？（默认：n）")" Yn
+    case ${Yn} in
+    [yY][eE][sS] | [yY])
+        trojan_info_extraction
+        get_info
+        set_port trojanport
+        trojanport=$port
+        port_used_check "${trojanport}"
+        sed -i "4c \"local_port\": ${trojanport}," ${trojan_conf_file}
+        trojan_go_info_html
+        systemctl stop trojan.service
+        systemctl start trojan.service
+        systemctl enable trojan.service
+        trojan_go_basic_information
+        update_trojan_info
+        ;;
+    *)  echo -e "${Info}什么也没做……"
+        exit 1
+        ;;
+    esac
+}
 count_days(){
   if [[ -f ${trojan_qr_config_file} ]]; then
       trojan_info_extraction
@@ -247,14 +327,13 @@ echo -e "
 ${GREEN}=========================Trojan-go+tls 安装成功==============================
 ${FUCHSIA}=========================   Trojan-go 配置信息  =============================
 ${GREEN}地址：              ${domain}
-${GREEN}端口：              443
+${GREEN}端口：              ${trojanport}
 ${GREEN}密码：              ${password}
 ${GREEN}websocket状态：     ${websocket_status}
 ${GREEN}websocket路径：     ${websocket_path}
-${GREEN}websocket多重TLS：  ${double_tls}
-${GREEN}混淆密码：          ${obfuscation_password}
+${GREEN}多路复用状态：       ${mux_status}
 ${FUCHSIA}=========================   客户端配置文件  ===============================
-${GREEN}详细信息：https://${domain}/${uuid}.html${NO_COLOR}"
+${GREEN}详细信息：https://${domain}:${webport}/${uuid}.html${NO_COLOR}"
 } | tee /etc/motd
 }
 
@@ -272,7 +351,11 @@ main() {
       $FUCHSIA====================================================================
       ${GREEN}7.禁用websocket协议          ${GREEN}8. 查询证书有效期剩余天数
       $FUCHSIA====================================================================
-      ${GREEN}9. 更新证书有效期             ${GREEN}0. 啥也不做，退出
+      ${GREEN}9. 更新证书有效期             ${GREEN}10. 启用多路复用
+      $FUCHSIA====================================================================
+      ${GREEN}11. 禁用多路复用              ${GREEN}12. 修改trojan端口
+      $FUCHSIA====================================================================
+      ${GREEN}0. 啥也不做，退出
       $FUCHSIA====================================================================${NO_COLOR}"
   read -rp "请输入数字：" menu_num
   case $menu_num in
@@ -333,6 +416,30 @@ main() {
 
     echo -e "目前证书在 60 天以后会自动更新, 你无需任何操作. 今后有可能会缩短这个时间, 不过都是自动的, 你不用关心."
     ;;
+  10)
+      trojan_info_extraction
+      get_info
+      open_mux
+      trojan_go_info_html
+      systemctl stop trojan.service
+      systemctl start trojan.service
+      systemctl enable trojan.service
+      trojan_go_basic_information
+      update_trojan_info
+    ;;
+  11)
+      trojan_info_extraction
+      get_info
+      close_mux
+      trojan_go_info_html
+      systemctl stop trojan.service
+      systemctl start trojan.service
+      systemctl enable trojan.service
+      trojan_go_basic_information
+      update_trojan_info
+    ;;
+  12)change_trojan_port
+    ;;
   0)
     exit 0
     ;;
@@ -340,7 +447,7 @@ main() {
     echo -e "${RedBG}请输入正确的数字${Font}"
     ;;
   esac
-  elif  [[ -f "${caddy_bin_dir}/caddy" ]] && [[ -d "${trojan_dir}" ]]; then
+  elif  [[ -f "${caddy_conf}" ]] && [[ -d "${trojan_dir}" ]]; then
     echo -e "
       $FUCHSIA====================================================================
       ${GREEN}         检测到您当前安装的是Caddy + Trojan-go + Tls
@@ -353,7 +460,11 @@ main() {
       $FUCHSIA====================================================================
       ${GREEN}7.禁用websocket协议          ${GREEN}8. 查询证书有效期剩余天数
       $FUCHSIA====================================================================
-      ${GREEN}9. 更新证书有效期             ${GREEN}0. 啥也不做，退出
+      ${GREEN}9. 更新证书有效期             ${GREEN}10. 启用多路复用
+      $FUCHSIA====================================================================
+      ${GREEN}11. 禁用多路复用              ${GREEN}12. 修改trojan端口
+      $FUCHSIA====================================================================
+      ${GREEN}0. 啥也不做，退出
       $FUCHSIA====================================================================${NO_COLOR}"
   read -rp "请输入数字：" menu_num
   case $menu_num in
@@ -413,6 +524,30 @@ main() {
   9)
 
     echo -e "目前证书在 60 天以后会自动更新, 你无需任何操作. 今后有可能会缩短这个时间, 不过都是自动的, 你不用关心."
+    ;;
+  10)
+      trojan_info_extraction
+      get_info
+      open_mux
+      trojan_go_info_html
+      systemctl stop trojan.service
+      systemctl start trojan.service
+      systemctl enable trojan.service
+      trojan_go_basic_information
+      update_trojan_info
+    ;;
+  11)
+      trojan_info_extraction
+      get_info
+      close_mux
+      trojan_go_info_html
+      systemctl stop trojan.service
+      systemctl start trojan.service
+      systemctl enable trojan.service
+      trojan_go_basic_information
+      update_trojan_info
+    ;;
+  12)change_trojan_port
     ;;
   0)
     exit 0
