@@ -832,6 +832,7 @@ install_caddy() {
 }
 install_caddy_service(){
   echo -e "${Info}开始安装caddy后台管理服务……"
+  systemctl stop caddy.service
   cat >${caddy_systemd_file} <<EOF
 # caddy.service
 #
@@ -868,7 +869,10 @@ AmbientCapabilities=CAP_NET_BIND_SERVICE
 [Install]
 WantedBy=multi-user.target
 EOF
+systemctl daemon-reload
+systemctl restart caddy.server
  sucess_or_fail "caddy后台管理服务安装"
+
 }
 
 caddy_trojan_conf() {
@@ -939,6 +943,8 @@ trojan_nginx_install(){
   remove_trojan_mgr
   check_caddy_installed_status
   uninstall_caddy
+  port_used_check 80
+  port_used_check 443
   get_ip
   check_domain
   tls_generate_script_install
@@ -978,6 +984,8 @@ trojan_caddy_install(){
   install_dependency
   uninstall_web
   remove_trojan_mgr
+  port_used_check 80
+  port_used_check 443
   uninstall_nginx
   get_ip
   check_domain
