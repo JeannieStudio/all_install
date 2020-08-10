@@ -990,7 +990,7 @@ trojan_caddy_install(){
   tls_generate
   web_download
   install_caddy
-  install_caddy_service
+  #install_caddy_service
   systemctl daemon-reload
   set_port caddy
   webport=$port
@@ -1009,8 +1009,8 @@ trojan_caddy_install(){
   trojan_go_info_html
   trojan_go_systemd
   systemctl restart trojan.service
-	systemctl enable trojan.service
-	download_trojan_mgr
+  systemctl enable trojan.service
+  download_trojan_mgr
   trojan_go_basic_information
 }
 uninstall_all(){
