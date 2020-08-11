@@ -35,10 +35,10 @@ nginx_conf="${nginx_conf_dir}/default.conf"
 nginx_dir="/etc/nginx"
 nginx_openssl_src="/usr/local/src"
 nginx_systemd_file="/etc/systemd/system/nginx.service"
-caddy_bin_dir="/usr/local/bin"
+caddy_bin_dir="/usr/bin/caddy"
 caddy_conf_dir="/etc/caddy"
 caddy_conf="${caddy_conf_dir}/Caddyfile"
-caddy_systemd_file="/usr/lib/systemd/system/caddy.service"
+caddy_systemd_file="/lib/systemd/system/caddy.service"
 nginx_version="1.18.0"
 openssl_version="1.1.1g"
 jemalloc_version="5.2.1"
@@ -830,25 +830,43 @@ install_caddy() {
       yum install caddy -y
     fi
 }
+install2_caddy() {
+  [[ ! -d ${caddy_bin_dir} ]] && mkdir ${caddy_bin_dir}
+  if [[ ! -f ${caddy_bin_dir}/caddy ]];then
+        case  ${bit} in
+        "x86_64")
+          wget --no-check-certificate -O ${caddy_bin_dir}/caddy_2.1.1_linux_amd64.zip "https://github.com/caddyserver/caddy/releases/download/v2.1.1/caddy_2.1.1_linux_amd64.tar.gz"
+          sucess_or_fail "caddy下载"
+          unzip -o -d ${caddy_bin_dir} ${caddy_bin_dir}/caddy_2.1.1_linux_amd64.zip
+          sucess_or_fail "caddy解压"
+          rm -f ${caddy_bin_dir}/caddy_2.1.1_linux_amd64.zip
+          ;;
+        "armv6")
+          wget --no-check-certificate -O ${caddy_bin_dir}/caddy_2.1.1_linux_armv6.zip "https://github.com/caddyserver/caddy/releases/download/v2.1.1/caddy_2.1.1_linux_armv6.tar.gz"
+           sucess_or_fail "caddy下载"
+          unzip -o -d ${caddy_bin_dir} ${caddy_bin_dir}/caddy_2.1.1_linux_armv6.zip
+          sucess_or_fail "caddy解压"
+           rm -f ${caddy_bin_dir}/caddy_2.1.1_linux_armv6.zip
+          ;;
+        "armv7l")
+          wget --no-check-certificate -O ${caddy_bin_dir}/caddy_2.1.1_linux_armv7.zip "https://github.com/caddyserver/caddy/releases/download/v2.1.1/caddy_2.1.1_linux_armv7.tar.gz"
+           sucess_or_fail "caddy下载"
+          unzip -o -d ${caddy_bin_dir} ${caddy_bin_dir}/caddy_2.1.1_linux_armv7.zip
+          sucess_or_fail "caddy解压"
+          rm -f ${caddy_bin_dir}/caddy_2.1.1_linux_armv7.zip
+          ;;
+        *)
+          echo -e "${Error}不支持 [${bit}] ! 请向Jeannie反馈[]中的名称，会及时添加支持。" && exit 1
+          ;;
+        esac
+
+    else
+      echo -e "${Info}trojan-go已存在，无需安装"
+    fi
+}
 install_caddy_service(){
   echo -e "${Info}开始安装caddy后台管理服务……"
-  systemctl stop caddy.service
   cat >${caddy_systemd_file} <<EOF
-# caddy.service
-#
-# For using Caddy with a config file.
-#
-# Make sure the ExecStart and ExecReload commands are correct
-# for your installation.
-#
-# See https://caddyserver.com/docs/install for instructions.
-#
-# WARNING: This service does not use the --resume flag, so if you
-# use the API to make changes, they will be overwritten by the
-# Caddyfile next time the service is restarted. If you intend to
-# use Caddy's API to configure it, add the --resume flag to the
-# `caddy run` command or use the caddy-api.service file instead.
-
 [Unit]
 Description=Caddy
 Documentation=https://caddyserver.com/docs/
@@ -869,10 +887,9 @@ AmbientCapabilities=CAP_NET_BIND_SERVICE
 [Install]
 WantedBy=multi-user.target
 EOF
-systemctl daemon-reload
-systemctl restart caddy.server
+  systemctl daemon-reload
+  systemctl restart caddy.server
  sucess_or_fail "caddy后台管理服务安装"
-
 }
 
 caddy_trojan_conf() {
@@ -881,7 +898,6 @@ ${domain}:${webport} {
   encode gzip
   root * ${web_dir}
   file_server
-  tls /data/${domain}/fullchain.crt /data/${domain}/privkey.key
   header X-Real-IP {http.request.remote.host}
   header X-Forwarded-For {http.request.remote.host}
   header X-Forwarded-Port {http.request.port}
@@ -993,7 +1009,6 @@ trojan_caddy_install(){
   tls_generate
   web_download
   install_caddy
-  install_caddy_service
   systemctl daemon-reload
   set_port caddy
   webport=$port
