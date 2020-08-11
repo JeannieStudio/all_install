@@ -878,7 +878,6 @@ ${domain}:${webport} {
   encode gzip
   root * ${web_dir}
   file_server
-  tls /data/${domain}/fullchain.crt /data/${domain}/privkey.key
   header X-Real-IP {http.request.remote.host}
   header X-Forwarded-For {http.request.remote.host}
   header X-Forwarded-Port {http.request.port}
