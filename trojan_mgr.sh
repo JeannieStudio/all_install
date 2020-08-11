@@ -489,11 +489,11 @@ main() {
     update_trojan_info
     ;;
   4)
-    caddy -service stop
+    systemctl stop caddy
     echo -e  "${GREEN}caddy服务停止${NO_COLOR}"
     ;;
   5)
-    caddy -service restart
+    systemctl restart caddy
     echo -e  "${GREEN}caddy服务启动${NO_COLOR}"
     ;;
   6)
