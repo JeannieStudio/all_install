@@ -35,10 +35,10 @@ nginx_conf="${nginx_conf_dir}/default.conf"
 nginx_dir="/etc/nginx"
 nginx_openssl_src="/usr/local/src"
 nginx_systemd_file="/etc/systemd/system/nginx.service"
-caddy_bin_dir="/usr/local/bin"
+caddy_bin_dir="/usr/bin/caddy"
 caddy_conf_dir="/etc/caddy"
 caddy_conf="${caddy_conf_dir}/Caddyfile"
-caddy_systemd_file="/usr/lib/systemd/system/caddy.service"
+caddy_systemd_file="/lib/systemd/system/caddy.service"
 nginx_version="1.18.0"
 openssl_version="1.1.1g"
 jemalloc_version="5.2.1"
@@ -101,6 +101,7 @@ GCE_debian10(){
 }
 install_dependency() {
   echo -e "${Info}开始升级系统，需要花费几分钟……"
+  ${cmd} install apt-transport-https
   ${cmd} update -y
   sucess_or_fail "系统升级"
   echo -e "${Info}开始安装依赖……"
@@ -817,7 +818,7 @@ nginx_trojan_conf() {
 EOF
 }
 
-install_caddy() {
+install2_caddy() {
     echo -e "${Info}开始安装caddy……"
     if [[ ${release} == "debian"||${release} == "ubuntu" ]]; then
       echo "deb [trusted=yes] https://apt.fury.io/caddy/ /" \
@@ -830,25 +831,45 @@ install_caddy() {
       yum install caddy -y
     fi
 }
+install_caddy() {
+    echo -e "${Info}开始安装caddy……"
+    [[ ! -d ${caddy_bin_dir} ]] && mkdir ${caddy_bin_dir}
+    if [[ ! -f ${caddy_bin_dir}/caddy ]];then
+        case  ${bit} in
+        "x86_64")
+          wget --no-check-certificate -O ${caddy_bin_dir}/caddy_2.1.1_linux_amd64.tar.gz "https://github.com/caddyserver/caddy/releases/download/v2.1.1/caddy_2.1.1_linux_amd64.tar.gz"
+          sucess_or_fail "caddy下载"
+          tar -zxvf ${caddy_bin_dir}/caddy_2.1.1_linux_amd64.tar.gz -C ${caddy_bin_dir}
+          sucess_or_fail "caddy解压"
+          rm -f ${caddy_bin_dir}/caddy_2.1.1_linux_amd64.tar.gz
+          ;;
+        "armv6")
+          wget --no-check-certificate -O ${caddy_bin_dir}/caddy_2.1.1_linux_armv6.tar.gz "https://github.com/caddyserver/caddy/releases/download/v2.1.1/caddy_2.1.1_linux_armv6.tar.gz"
+           sucess_or_fail "caddy下载"
+          tar -zxvf ${caddy_bin_dir}/caddy_2.1.1_linux_armv6.tar.gz -C ${caddy_bin_dir}
+          sucess_or_fail "caddy解压"
+          rm -f ${caddy_bin_dir}/caddy_2.1.1_linux_armv6.tar.gz
+          ;;
+        "armv7l")
+          wget --no-check-certificate -O ${caddy_bin_dir}/caddy_2.1.1_linux_armv7.tar.gz "https://github.com/caddyserver/caddy/releases/download/v2.1.1/caddy_2.1.1_linux_armv7.tar.gz"
+          sucess_or_fail "caddy下载"
+          tar -zxvf ${caddy_bin_dir}/caddy_2.1.1_linux_armv7.tar.gz -C ${caddy_bin_dir}
+          sucess_or_fail "caddy解压"
+          rm -f ${caddy_bin_dir}/caddy_2.1.1_linux_armv7.tar.gz
+          ;;
+        *)
+          echo -e "${Error}不支持 [${bit}] ! 请向Jeannie反馈[]中的名称，会及时添加支持。" && exit 1
+          ;;
+        esac
+    else
+      echo -e "${Info}trojan-go已存在，无需安装"
+    fi
+
+}
 install_caddy_service(){
   echo -e "${Info}开始安装caddy后台管理服务……"
   systemctl stop caddy.service
   cat >${caddy_systemd_file} <<EOF
-# caddy.service
-#
-# For using Caddy with a config file.
-#
-# Make sure the ExecStart and ExecReload commands are correct
-# for your installation.
-#
-# See https://caddyserver.com/docs/install for instructions.
-#
-# WARNING: This service does not use the --resume flag, so if you
-# use the API to make changes, they will be overwritten by the
-# Caddyfile next time the service is restarted. If you intend to
-# use Caddy's API to configure it, add the --resume flag to the
-# `caddy run` command or use the caddy-api.service file instead.
-
 [Unit]
 Description=Caddy
 Documentation=https://caddyserver.com/docs/
@@ -857,8 +878,8 @@ After=network.target
 [Service]
 User=root
 Group=root
-ExecStart=/usr/bin/caddy run --environ --config /etc/caddy/Caddyfile
-ExecReload=/usr/bin/caddy reload --config /etc/caddy/Caddyfile
+ExecStart=/usr/bin/caddy/caddy run --environ --config /etc/caddy/Caddyfile
+ExecReload=/usr/bin/caddy/caddy reload --config /etc/caddy/Caddyfile
 TimeoutStopSec=5s
 LimitNOFILE=1048576
 LimitNPROC=512
@@ -870,13 +891,13 @@ AmbientCapabilities=CAP_NET_BIND_SERVICE
 WantedBy=multi-user.target
 EOF
 systemctl daemon-reload
-systemctl restart caddy.server
- sucess_or_fail "caddy后台管理服务安装"
-
+sucess_or_fail "caddy后台管理服务安装"
 }
 
 caddy_trojan_conf() {
-  cat >${caddy_conf} <<_EOF
+  [[ ! -d ${caddy_conf_dir} ]] && mkdir ${caddy_conf_dir}
+  [[ ! -f ${caddy_conf} ]] && touch ${caddy_conf}
+  cat >${caddy_conf} <<EOF
 ${domain}:${webport} {
   encode gzip
   root * ${web_dir}
@@ -887,8 +908,9 @@ ${domain}:${webport} {
   header X-Forwarded-Port {http.request.port}
   header X-Forwarded-Proto {http.request.scheme}
 }
-_EOF
+EOF
 }
+
 uninstall_caddy() {
   if [[ -f ${caddy_bin_dir} ]] || [[ -f ${caddy_systemd_file} ]] || [[ -d ${caddy_conf_dir} ]] ; then
     echo -e "${Info}开始卸载Caddy……"
@@ -993,12 +1015,12 @@ trojan_caddy_install(){
   tls_generate
   web_download
   install_caddy
-  systemctl daemon-reload
   set_port caddy
   webport=$port
   port_used_check "${webport}"
   caddy_trojan_conf
-  systemctl restart caddy.service
+  install_caddy_service
+  systemctl restart caddy
   download_install
   set_port trojan
   trojanport=$port
