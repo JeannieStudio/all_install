@@ -236,9 +236,9 @@ uninstall_caddy() {
     echo -e "${Info}开始卸载Caddy……"
     systemctl stop caddy.service
      if [[ ${release} == "debian"||${release} == "ubuntu" ]]; then
-        apt remove --purge caddy
+        bash install-release.sh --remove
      elif [[ ${release} == "centos" ]]; then
-        yum remove caddy -y
+        bash install-release.sh --remove
      fi
     echo -e "${Info}Caddy卸载成功！"
   fi
@@ -295,7 +295,11 @@ install_v2ray() {
     [yY][eE][sS] | [yY])
         echo -e "${Info}开始安装v2ray……"
         sleep 2
-        bash <(curl -L -s https://install.direct/go.sh)
+        #bash <(curl -L -s https://install.direct/go.sh)
+        curl -O https://raw.githubusercontent.com/v2fly/fhs-install-v2ray/master/install-release.sh
+        curl -O https://raw.githubusercontent.com/v2fly/fhs-install-v2ray/master/install-dat-release.sh
+        bash install-release.sh
+        bash install-dat-release.sh
         ;;
     *)
         ;;
@@ -303,7 +307,11 @@ install_v2ray() {
   else
     echo -e "${Info}开始安装v2ray……"
     sleep 2
-    bash <(curl -L -s https://install.direct/go.sh)
+    #bash <(curl -L -s https://install.direct/go.sh)
+    curl -O https://raw.githubusercontent.com/v2fly/fhs-install-v2ray/master/install-release.sh
+    curl -O https://raw.githubusercontent.com/v2fly/fhs-install-v2ray/master/install-dat-release.sh
+    bash install-release.sh
+    bash install-dat-release.sh
   fi
 }
 
@@ -356,9 +364,9 @@ install_dependency() {
   sucess_or_fail "编译工具包 安装"
 
   if [[ "${cmd}" == "yum" ]]; then
-      ${cmd} -y install pcre pcre-devel zlib-devel epel-release dnf
+      ${cmd} -y install pcre pcre-devel zlib-devel epel-release dnf curl
   else
-      ${cmd} -y install libpcre3 libpcre3-dev zlib1g-dev dbus
+      ${cmd} -y install libpcre3 libpcre3-dev zlib1g-dev dbus curl
   fi
   ln -sf /usr/share/zoneinfo/Asia/Shanghai /etc/localtime
 }
@@ -542,7 +550,7 @@ install_caddy() {
   fi
 }
 install_caddy_service(){
-  rm -f ${caddy_systemd_file}
+  #rm -f ${caddy_systemd_file}
   #if [[ ${email} == "" ]]; then
   #  read -p "$(echo -e "${Info}请填写您的邮箱：")" email
   #  read -p "$(echo -e "${Info}邮箱输入正确吗（Y/n）？（默认：n）")" Yn
@@ -554,9 +562,12 @@ install_caddy_service(){
   #  done
  #fi
  #caddy -service install -agree -email "${email}" -conf "${caddy_conf}"
- random_num=$((RANDOM%12+4))
- email="$(head -n 10 /dev/urandom | md5sum | head -c ${random_num})@gmail.com"
- caddy -service install -agree -email "${email}" -conf "${caddy_conf}"
+ #random_num=$((RANDOM%12+4))
+ #email="$(head -n 10 /dev/urandom | md5sum | head -c ${random_num})@gmail.com"
+ #caddy -service install -agree -email "${email}" -conf "${caddy_conf}"
+
+sed -i 's/User=caddy/User=root/' ${caddy_systemd_file}
+sed -i 's/Group=caddy/Group=root/' ${caddy_systemd_file}
 }
 install_trojan() {
   if [[ ${trojan_install_flag} == "YES" ]] ; then
@@ -623,11 +634,20 @@ set_port() {
 }
 nginx_trojan_conf() {
   touch ${nginx_conf_dir}/default.conf
-  cat >${nginx_conf_dir}/default.conf <<EOF
+ cat >${nginx_conf_dir}/default.conf <<EOF
   server {
     listen ${webport};
     server_name ${domain};
     root ${web_dir};
+    ssl on;
+    ssl_certificate   /data/${domain}/fullchain.crt;
+    ssl_certificate_key  /data/${domain}/${domain}.key;
+	  ssl_ciphers                 TLS13-AES-256-GCM-SHA384:TLS13-CHACHA20-POLY1305-SHA256:TLS13-AES-128-GCM-SHA256:TLS13-AES-128-CCM-8-SHA256:TLS13-AES-128-CCM-SHA256:EECDH+CHACHA20:EECDH+CHACHA20-draft:EECDH+ECDSA+AES128:EECDH+aRSA+AES128:RSA+AES128:EECDH+ECDSA+AES256:EECDH+aRSA+AES256:RSA+AES256:EECDH+ECDSA+3DES:EECDH+aRSA+3DES:RSA+3DES:!MD5;
+    ssl_prefer_server_ciphers    on;
+    ssl_protocols                TLSv1 TLSv1.1 TLSv1.2 TLSv1.3;
+    ssl_session_cache            shared:SSL:50m;
+    ssl_session_timeout          1d;
+    ssl_session_tickets          on;
 }
 EOF
 }
@@ -637,7 +657,7 @@ nginx_v2ray_conf() {
   server {
       listen ${webport} ssl http2;
       ssl_certificate       /data/${domain}/fullchain.crt;
-      ssl_certificate_key   /data/${domain}/privkey.key;
+      ssl_certificate_key   /data/${domain}/${domain}.key;
       ssl_protocols         TLSv1.3;
       ssl_ciphers           TLS13-AES-256-GCM-SHA384:TLS13-CHACHA20-POLY1305-SHA256:TLS13-AES-128-GCM-SHA256:TLS13-AES-128-CCM-8-SHA256:TLS13-AES-128-CCM-SHA256:EECDH+CHACHA20:EECDH+CHACHA20-draft:EECDH+ECDSA+AES128:EECDH+aRSA+AES128:RSA+AES128:EECDH+ECDSA+AES256:EECDH+aRSA+AES256:RSA+AES256:EECDH+ECDSA+3DES:EECDH+aRSA+3DES:RSA+3DES:!MD5;
       server_name           $domain;
@@ -814,6 +834,7 @@ caddy_v2ray_conf() {
   cat >${caddy_conf} <<_EOF
 https://${domain}:${webport} {
   encode gzip
+  tls /data/${domain}/fullchain.crt /data/${domain}/${domain}.key
   root * /usr/wwwroot
   file_server
   root * ${web_dir}
@@ -830,8 +851,9 @@ _EOF
 caddy_trojan_conf() {
   [[ ! -d ${caddy_conf_dir} ]] && mkdir ${caddy_conf_dir}
   cat >${caddy_conf} <<_EOF
-http://${domain}:${webport} {
+https://${domain}:${webport} {
   encode gzip
+  tls /data/${domain}/fullchain.crt /data/${domain}/${domain}.key
   root * ${web_dir}
   file_server
   header X-Real-IP {http.request.remote.host}
@@ -843,8 +865,9 @@ _EOF
 }
 caddy_ssr_conf() {
   cat >${caddy_conf} <<_EOF
-http://${domain}:${webport} {
+https://${domain}:${webport} {
   encode gzip
+  tls /data/${domain}/fullchain.crt /data/${domain}/${domain}.key
   root * ${web_dir}
   file_server
   header X-Real-IP {http.request.remote.host}
@@ -878,7 +901,7 @@ trojan_conf() {
     "log_level": 1,
     "ssl": {
         "cert": "/data/${domain}/fullchain.crt",
-        "key": "/data/${domain}/privkey.key",
+        "key": "/data/${domain}/${domain}.key",
         "key_password": "",
         "cipher": "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384",
         "cipher_tls13": "TLS_AES_128_GCM_SHA256:TLS_CHACHA20_POLY1305_SHA256:TLS_AES_256_GCM_SHA384",
@@ -963,7 +986,7 @@ tls_generate_script_install() {
     source ~/.bashrc
 }
 tls_generate() {
-  if [[ -f "/data/${domain}/fullchain.crt" ]] && [[ -f "/data/${domain}/privkey.key" ]]; then
+  if [[ -f "/data/${domain}/fullchain.crt" ]] && [[ -f "/data/${domain}/${domain}.key" ]]; then
     echo -e "${Info}证书已存在……不需要再重新签发了……"
   else
     if "$HOME"/.acme.sh/acme.sh --issue -d "${domain}" --standalone -k ec-256 --force --test; then
@@ -981,7 +1004,7 @@ tls_generate() {
         sleep 2
         [[ ! -d "/data" ]] && mkdir /data
         [[ ! -d "/data/${domain}" ]] && mkdir "/data/${domain}"
-        if "$HOME"/.acme.sh/acme.sh --installcert -d "${domain}" --fullchainpath /data/${domain}/fullchain.crt --keypath /data/${domain}/privkey.key --ecc --force; then
+        if "$HOME"/.acme.sh/acme.sh --installcert -d "${domain}" --fullchainpath /data/"${domain}"/fullchain.crt --keypath /data/"${domain}"/"${domain}".key --ecc --force; then
             echo -e "${Info}证书配置成功 "
             sleep 2
         fi
@@ -1048,7 +1071,7 @@ ${trojan_link2}
 ${GREEN}二维码1：  ${web_dir}/${uuid}-01.png
 ${GREEN}二维码2：  ${web_dir}/${uuid}-02.png
 ${FUCHSIA}=========================   懒人请往这儿瞧  ===============================
-${GREEN}详细信息：https://${domain}:${trojanport}/${uuid}.html${NO_COLOR}"
+${GREEN}详细信息：https://${domain}:${webport}/${uuid}.html${NO_COLOR}"
 } | tee /etc/motd
 }
 ssr_qr_config() {
@@ -1221,7 +1244,6 @@ install_trojan_nginx() {
   check_sys
   sys_cmd
   install_dependency
-  #close_firewall
   check_caddy_installed_status
   uninstall_caddy
   check_v2ray_installed_status
@@ -1231,6 +1253,8 @@ install_trojan_nginx() {
   uninstall_web
   get_ip
   check_domain
+  port_used_check 80
+  port_used_check 443
   tls_generate_script_install
   tls_generate
   check_nginx_installed_status
@@ -1267,7 +1291,6 @@ install_trojan_caddy() {
   check_sys
   sys_cmd
   install_dependency
-  #close_firewall
   check_nginx_installed_status
   uninstall_nginx
   check_v2ray_installed_status
@@ -1277,17 +1300,19 @@ install_trojan_caddy() {
   uninstall_web
   get_ip
   check_domain
+  port_used_check 80
+  port_used_check 443
   tls_generate_script_install
   tls_generate
   check_caddy_installed_status
   install_caddy
-  #install_caddy_service
+  install_caddy_service
+  systemctl daemon-reload
   set_port caddy
   webport=$port
   port_used_check "${webport}"
   caddy_trojan_conf
   web_download
-  #caddy -service restart
   systemctl restart caddy.service
   check_trojan_installed_status
   install_trojan
@@ -1313,7 +1338,6 @@ install_v2ray_nginx() {
   check_sys
   sys_cmd
   install_dependency
-  #close_firewall
   check_caddy_installed_status
   uninstall_caddy
   check_trojan_installed_status
@@ -1323,6 +1347,8 @@ install_v2ray_nginx() {
   uninstall_web
   get_ip
   check_domain
+  port_used_check 80
+  port_used_check 443
   tls_generate_script_install
   tls_generate
   check_nginx_installed_status
@@ -1359,7 +1385,6 @@ install_v2ray_caddy() {
   check_sys
   sys_cmd
   install_dependency
-  #close_firewall
   check_nginx_installed_status
   uninstall_nginx
   check_trojan_installed_status
@@ -1369,17 +1394,19 @@ install_v2ray_caddy() {
   uninstall_web
   get_ip
   check_domain
+  port_used_check 80
+  port_used_check 443
   tls_generate_script_install
   tls_generate
   check_caddy_installed_status
   install_caddy
+  install_caddy_service
+  systemctl daemon-reload
   set_port caddy
   webport=$port
   port_used_check "${webport}"
   caddy_v2ray_conf
   web_download
-  #install_caddy_service
-  #caddy -service restart
   systemctl restart caddy.service
   check_v2ray_installed_status
   install_v2ray
@@ -1404,7 +1431,6 @@ install_ssr_caddy() {
   check_sys
   sys_cmd
   install_dependency
-  #close_firewall
   check_nginx_installed_status
   uninstall_nginx
   check_v2ray_installed_status
@@ -1414,14 +1440,16 @@ install_ssr_caddy() {
   uninstall_web
   get_ip
   check_domain
+  port_used_check 80
+  port_used_check 443
   tls_generate_script_install
   tls_generate
   check_caddy_installed_status
   install_caddy
+  install_caddy_service
+  systemctl daemon-reload
   caddy_ssr_conf
   web_download
-  #install_caddy_service
-  #caddy -service restart
   systemctl restart caddy.service
   check_ssr_installed_status
   install_ssr
