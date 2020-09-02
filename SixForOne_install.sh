@@ -31,8 +31,8 @@ nginx_openssl_src="/usr/local/src"
 nginx_systemd_file="/etc/systemd/system/nginx.service"
 v2ray_bin_dir="/usr/bin/v2ray"
 v2ray_systemd_file="/etc/systemd/system/v2ray.service"
-v2ray_conf_dir="/etc/v2ray"
-v2ray_conf="/usr/local/etc/v2ray/config.json"
+v2ray_conf_dir="/usr/local/etc/v2ray"
+v2ray_conf="${v2ray_conf_dir}/config.json"
 v2ray_shadowrocket_qr_config_file="${v2ray_conf_dir}/shadowrocket_qrconfig.json"
 v2ray_win_and_android_qr_config_file="${v2ray_conf_dir}/win_and_android_qrconfig.json"
 caddy_bin_dir="/usr/bin/caddy"
@@ -724,7 +724,7 @@ v2ray_conf() {
     read -rp "$(echo -e "${Tip}已为您生成了uuid:${uuid},确认使用吗?[Y/n]?")" yn
   done
   [[ ! -d "${v2ray_conf_dir}" ]] && mkdir ${v2ray_conf_dir}
-  cat >${v2ray_conf} <<"_EOF"
+  cat >${v2ray_conf} <<EOF
 	  {
       "inbounds": [
         {
@@ -734,7 +734,7 @@ v2ray_conf() {
           "settings": {
             "clients": [
               {
-                "id": "b831381d-6324-4d53-ad4f-8cda48b30811",
+                "id": "${uuid}",
                 "alterId": 64
               }
             ]
@@ -754,8 +754,8 @@ v2ray_conf() {
         }
       ]
     }
-_EOF
-  sed -i "s/b831381d-6324-4d53-ad4f-8cda48b30811/${uuid}/g" ${v2ray_conf}
+EOF
+  #sed -i "s/b831381d-6324-4d53-ad4f-8cda48b30811/${uuid}/g" ${v2ray_conf}
 }
 web_download() {
   [[ ! -d "${web_dir}" ]] && mkdir "${web_dir}"
@@ -1448,6 +1448,7 @@ install_ssr_caddy() {
   install_caddy
   install_caddy_service
   systemctl daemon-reload
+  set_port caddy
   caddy_ssr_conf
   web_download
   systemctl restart caddy.service
