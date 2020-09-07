@@ -297,9 +297,13 @@ install_v2ray() {
       sleep 2
       #bash <(curl -L -s https://install.direct/go.sh)
       curl -O https://raw.githubusercontent.com/v2fly/fhs-install-v2ray/master/install-release.sh
-      curl -O https://raw.githubusercontent.com/v2fly/fhs-install-v2ray/master/install-dat-release.sh
-      bash install-release.sh
-      bash install-dat-release.sh
+    sucess_or_fail "v2ray包安装下载"
+    curl -O https://raw.githubusercontent.com/v2fly/fhs-install-v2ray/master/install-dat-release.sh
+    sucess_or_fail "v2ray数据包下载"
+    bash install-release.sh
+    sucess_or_fail "v2ray安装"
+    bash install-dat-release.sh
+    sucess_or_fail "v2ray数据包安装"
       ;;
     *) ;;
 
@@ -309,9 +313,13 @@ install_v2ray() {
     sleep 2
     #bash <(curl -L -s https://install.direct/go.sh)
     curl -O https://raw.githubusercontent.com/v2fly/fhs-install-v2ray/master/install-release.sh
+    sucess_or_fail "v2ray包安装下载"
     curl -O https://raw.githubusercontent.com/v2fly/fhs-install-v2ray/master/install-dat-release.sh
+    sucess_or_fail "v2ray数据包下载"
     bash install-release.sh
+    sucess_or_fail "v2ray安装"
     bash install-dat-release.sh
+    sucess_or_fail "v2ray数据包安装"
   fi
 }
 install_v2ray_service() {
