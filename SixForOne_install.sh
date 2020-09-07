@@ -1799,7 +1799,7 @@ uninstall_all() {
 main() {
   echo -e "
 ${FUCHSIA}===================================================
-${GREEN}trojan、v2ray、ssr六合一脚本(authored by Jeannie)
+${GREEN}trojan、v2ray、ssr八合一脚本(authored by Jeannie)
 ${FUCHSIA}===================================================
 ${GREEN}如果已经安装了下列脚本之一，想要安装其他的，不需要单独执行卸载，直接选择想要安装脚本对应的数字即可……
 ${GREEN}因为安装的同时会执行卸载，除非想卸载干净回到初始状态,可以执行7……
