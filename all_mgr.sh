@@ -24,11 +24,11 @@ nginx_bin_old_file="/usr/sbin/nginx"
 nginx_conf_dir="/etc/nginx/conf/conf.d"
 nginx_conf="${nginx_conf_dir}/default.conf"
 nginx_dir="/etc/nginx"
-v2ray_bin_dir="/usr/bin/v2ray"
+v2ray_bin_dir="/usr/local/bin/v2ray"
 v2ray_systemd_file="/etc/systemd/system/v2ray.service"
 nginx_bin_file="/etc/nginx/sbin/nginx"
-v2ray_conf_dir="/etc/v2ray"
-v2ray_conf="${v2ray_conf_dir}/config.json"
+v2ray_conf_dir="/usr/local/etc/v2ray"
+v2ray_conf="/usr/local/etc/v2ray/config.json"
 v2ray_shadowrocket_qr_config_file="${v2ray_conf_dir}/shadowrocket_qrconfig.json"
 v2ray_win_and_android_qr_config_file="${v2ray_conf_dir}/win_and_android_qrconfig.json"
 caddy_bin_dir="/usr/bin/caddy"
@@ -70,6 +70,12 @@ output_v2ray_information() {
   uuid=$(v2ray_info_extraction '\"id\"')
   domain=$(v2ray_info_extraction '\"add\"')
   webport=$(v2ray_info_extraction '\"port\"')
+}
+output_vless_information() {
+  uuid=$(v2ray_info_extraction '\"id\"')
+  domain=$(v2ray_info_extraction '\"add\"')
+  vlessport=$(v2ray_info_extraction '\"port\"')
+  webport=$(v2ray_info_extraction '\"webport\"')
 }
 output_ssr_information(){
   uuid=$(ssr_qr_info_extraction '\"uuid\"')
@@ -169,7 +175,7 @@ v2ray_conf() {
     uuid=$(cat /proc/sys/kernel/random/uuid)
     read -rp "$(echo -e "${Tip}已为您生成了uuid:${uuid},确认使用吗?[Y/n]?")" yn
   done
-  cat >${v2ray_conf} <<"_EOF"
+  cat >${v2ray_conf} <<EOF
 	  {
       "inbounds": [
         {
@@ -179,7 +185,7 @@ v2ray_conf() {
           "settings": {
             "clients": [
               {
-                "id": "b831381d-6324-4d53-ad4f-8cda48b30811",
+                "id": "${uuid}",
                 "alterId": 64
               }
             ]
@@ -199,8 +205,19 @@ v2ray_conf() {
         }
       ]
     }
-_EOF
-  sed -i "s/b831381d-6324-4d53-ad4f-8cda48b30811/${uuid}/g" ${v2ray_conf}
+EOF
+  #sed -i "s/b831381d-6324-4d53-ad4f-8cda48b30811/${uuid}/g" ${v2ray_conf}
+}
+vless_conf() {
+  old_uuid=${uuid}
+  uuid=$(cat /proc/sys/kernel/random/uuid)
+  read -rp "$(echo -e "${Tip}已为您生成了uuid:${uuid},确认使用吗?[Y/n]?")" yn
+  while [[ "${yn}" != [Yy] ]]; do
+    uuid=$(cat /proc/sys/kernel/random/uuid)
+    read -rp "$(echo -e "${Tip}已为您生成了uuid:${uuid},确认使用吗?[Y/n]?")" yn
+  done
+  sed -i "s/${old_uuid}/${uuid}/g" ${v2ray_conf}
+
 }
 input_ssr_password(){
   read -rp "$(echo -e "${Info}请输入新密码:")" password
@@ -255,7 +272,14 @@ v2ray_win_and_android_qr_link_image() {
   v2ray_link2="vmess://$(base64 -w 0 ${v2ray_win_and_android_qr_config_file})"
   qrencode -o ${web_dir}/${uuid}-2.png -s 6 "${v2ray_link2}"
 }
-
+vless_shadowrocket_qr_link_image() {
+  v2ray_link1="vless://$(base64 -w 0 ${v2ray_shadowrocket_qr_config_file})"
+  qrencode -o ${web_dir}/${uuid}-1.png -s 6 "${v2ray_link1}"
+}
+vless_win_and_android_qr_link_image() {
+  v2ray_link2="vless://$(base64 -w 0 ${v2ray_win_and_android_qr_config_file})"
+  qrencode -o ${web_dir}/${uuid}-2.png -s 6 "${v2ray_link2}"
+}
 trojan_info_html() {
   vps="trojan"
   wget --no-check-certificate -O ${web_dir}/trojan_tmpl.html https://raw.githubusercontent.com/JeannieStudio/jeannie/master/trojan_tmpl.html
@@ -268,6 +292,15 @@ EOF
 v2ray_info_html() {
   vps="v2ray"
   wget --no-check-certificate -O ${web_dir}/v2ray_tmpl.html https://raw.githubusercontent.com/JeannieStudio/jeannie/master/v2ray_tmpl.html
+  chmod +x ${web_dir}/v2ray_tmpl.html
+  eval "cat <<EOF
+  $(<${web_dir}/v2ray_tmpl.html)
+EOF
+  " >${web_dir}/${uuid}.html
+}
+vless_info_html() {
+  vps="v2ray"
+  wget --no-check-certificate -O ${web_dir}/v2ray_tmpl.html https://raw.githubusercontent.com/JeannieStudio/jeannie/master/vless_tmpl.html
   chmod +x ${web_dir}/v2ray_tmpl.html
   eval "cat <<EOF
   $(<${web_dir}/v2ray_tmpl.html)
@@ -300,6 +333,10 @@ v2ray_qr_config() {
 v2ray_qr_port_config() {
   sed -i "5c \"port\": \"${webport}\"," ${v2ray_shadowrocket_qr_config_file}
   sed -i "5c \"port\": \"${webport}\"," ${v2ray_win_and_android_qr_config_file}
+}
+vless_qr_port_config() {
+  sed -i "5c \"port\": \"${vlessport}\"," ${v2ray_shadowrocket_qr_config_file}
+  sed -i "5c \"port\": \"${vlessport}\"," ${v2ray_win_and_android_qr_config_file}
 }
 ssr_qr_config() {
   sed -i "2c \"uuid\":\"${uuid}\"," ${ssr_qr_config_file}
@@ -372,6 +409,33 @@ ${BLUE}windows和安卓客户端v2rayN二维码：
 ${GREEN}${web_dir}/${uuid}-1.png
 ${BLUE}ios客户端shadowroket二维码：
 ${GREEN}${web_dir}/${uuid}-2.png
+${FUCHSIA}=========================   懒人请往这儿瞧  ======================================
+${GREEN}https://$(v2ray_info_extraction '\"add\"'):${webport}/${uuid}.html${NO_COLOR}"
+  } | tee /etc/motd
+}
+vless_basic_information() {
+  {
+    echo -e "
+${GREEN}=========================V2ray+ws+tls 安装成功==============================
+${FUCHSIA}=========================   V2ray 配置信息   ===============================
+${GREEN}地址(address):       $(v2ray_info_extraction '\"add\"')
+${GREEN}端口（port）：        ${vlessport}
+${GREEN}用户id（UUID）：      $(v2ray_info_extraction '\"id\"')
+${GREEN}加密方式（security）：自适应
+${GREEN}传输协议（network）： ws
+${GREEN}伪装类型（type）：    none
+${GREEN}路径（不要落下/）：   /ray/
+${GREEN}底层传输安全：        tls
+${GREEN}重启服务、修改密码、修改端口号、查看证书有效期等，请执行：/etc/all_mgr.sh
+${FUCHSIA}=========================   分享链接和二维码  ===============================
+${BLUE}windows和安卓客户端v2rayN分享链接：
+${GREEN}官方暂未提供VLESS 的分享链接标准
+${BLUE}ios客户端shadowroket分享链接：
+${GREEN}官方暂未提供VLESS 的分享链接标准
+${BLUE}windows和安卓客户端v2rayN二维码：
+${GREEN}官方暂未提供VLESS 的分享链接标准
+${BLUE}ios客户端shadowroket二维码：
+${GREEN}官方暂未提供VLESS 的分享链接标准
 ${FUCHSIA}=========================   懒人请往这儿瞧  ======================================
 ${GREEN}https://$(v2ray_info_extraction '\"add\"'):${webport}/${uuid}.html${NO_COLOR}"
   } | tee /etc/motd
@@ -470,12 +534,30 @@ change_nginx_port(){
   systemctl restart nginx
   v2ray_basic_information
 }
+change_v2ray_port(){
+  v2ray_info_extraction
+  output_vless_information
+  old_vlessport=vlessport
+  rm -f ${web_dir}/${uuid}-01.png
+  rm -f ${web_dir}/${uuid}-02.png
+  set_port v2ray
+  vlessport=$port
+  port_used_check "${vlessport}"
+  sed -i "7c  \"port\": ${vlessport}," ${v2ray_conf}
+  vless_qr_port_config
+  vess_shadowrocket_qr_link_image
+  vless_win_and_android_qr_link_image
+  vless_info_html
+  left_second v2ray
+  systemctl restart v2ray
+  vless_basic_information
+}
 change_caddy_port(){
   v2ray_info_extraction
   output_v2ray_information
   rm -f ${web_dir}/${uuid}-01.png
   rm -f ${web_dir}/${uuid}-02.png
-  set_port nginx
+  set_port caddy
   webport=$port
   port_used_check "${webport}"
   sed -i "1c https://${domain}:${webport} {" ${caddy_conf}
@@ -525,8 +607,21 @@ change_v2ray_uuid(){
   v2ray_win_and_android_qr_link_image
   v2ray_info_html
   left_second ${webserver}
-  service v2ray restart
+  systemctl restart v2ray
   v2ray_basic_information
+}
+change_vless_uuid(){
+  v2ray_info_extraction
+  output_vless_information
+  remove_v2ray_old_information
+  vless_conf
+  v2ray_qr_config
+  vless_shadowrocket_qr_link_image
+  vless_win_and_android_qr_link_image
+  vless_info_html
+  left_second ${webserver}
+  systemctl restart v2ray
+  vless_basic_information
 }
 change_ssr_password(){
   ssr_qr_info_extraction
@@ -644,10 +739,10 @@ main(){
             exit
           ;;
       esac
-  elif [[ -e "${nginx_bin_file}" ]] && [[ -e "${v2ray_bin_dir}/v2ray" ]]; then
+  elif [[ -e "${nginx_bin_file}" ]] && [[ -e "${v2ray_bin_dir}" ]] && [[ "`cat ${v2ray_conf}|grep -c vmess`" != 0 ]]; then
        echo -e "
       $FUCHSIA=======================================================
-      ${GREEN}系统检测到您目前安装的是v2ray+nginx+tls一键脚本
+      ${GREEN}系统检测到您目前安装的是vmess+nginx+tls一键脚本
        $FUCHSIA=======================================================
       ${GREEN}1. 停止v2ray           ${GREEN}2. 重启v2ray
       $FUCHSIA=======================================================
@@ -663,10 +758,10 @@ main(){
       $FUCHSIA=======================================================${NO_COLOR}"
       read -rp "请输入您要执行的操作的数字:" aNum
       case $aNum in
-          1)service v2ray stop
+          1)systemctl stop v2ray
             echo -e  "${GREEN}v2ray服务停止${NO_COLOR}"
           ;;
-          2)service v2ray restart
+          2)systemctl restart v2ray
             echo -e  "${GREEN}v2ray服务启动${NO_COLOR}"
           ;;
           3)webserver=v2ray
@@ -682,8 +777,9 @@ main(){
           ;;
           7)echo -e "目前证书在 60 天以后会自动更新, 你无需任何操作. 今后有可能会缩短这个时间, 不过都是自动的, 你不用关心."
           ;;
-          8)bash <(curl -L -s https://install.direct/go.sh)
-            service v2ray restart
+          8)bash install-release.sh
+            bash install-dat-release.sh
+            systemctl restart v2ray
           ;;
           9)webserver=nginx
             change_nginx_port
@@ -694,10 +790,10 @@ main(){
             exit
           ;;
       esac
-  elif [[ -e "${caddy_bin_dir}" ]] && [[ -e "${v2ray_bin_dir}/v2ray" ]]; then
+  elif [[ -e "${caddy_bin_dir}" ]] && [[ -e "${v2ray_bin_dir}" ]] && [[ "`cat ${v2ray_conf}|grep -c vmess`" != 0 ]]; then
       echo -e "
       $FUCHSIA=======================================================
-      ${GREEN}系统检测到您目前安装的是v2ray+caddy+tls一键脚本
+      ${GREEN}系统检测到您目前安装的是vmess+caddy+tls一键脚本
       $FUCHSIA=======================================================
       ${GREEN}1. 停止v2ray            ${GREEN}2. 重启v2ray
       $FUCHSIA=======================================================
@@ -713,10 +809,10 @@ main(){
       $FUCHSIA=======================================================${NO_COLOR}"
       read -rp "请输入您要执行的操作的数字:" aNum
       case $aNum in
-          1)service v2ray stop
+          1)systemctl stop v2ray
             echo -e  "${GREEN}v2ray服务停止${NO_COLOR}"
           ;;
-          2)service v2ray restart
+          2)systemctl restart v2ray
             echo -e  "${GREEN}v2ray服务启动${NO_COLOR}"
           ;;
           3)webserver=v2ray
@@ -732,8 +828,9 @@ main(){
           ;;
           7)echo -e "目前证书在 60 天以后会自动更新, 你无需任何操作. 今后有可能会缩短这个时间, 不过都是自动的, 你不用关心."
           ;;
-          8)bash <(curl -L -s https://install.direct/go.sh)
-            service v2ray restart
+          8)bash install-release.sh
+            bash install-dat-release.sh
+            systemctl restart v2ray
           ;;
           9)webserver=caddy
             change_caddy_port
@@ -744,7 +841,108 @@ main(){
             exit
           ;;
       esac
-
+  elif [[ -e "${nginx_bin_file}" ]] && [[ -e "${v2ray_bin_dir}" ]] && [[ "`cat ${v2ray_conf}|grep -c vless`" != 0 ]]; then
+       echo -e "
+      $FUCHSIA=======================================================
+      ${GREEN}系统检测到您目前安装的是vless+nginx+tls一键脚本
+       $FUCHSIA=======================================================
+      ${GREEN}1. 停止v2ray           ${GREEN}2. 重启v2ray
+      $FUCHSIA=======================================================
+      ${GREEN}3. 修改UUID            ${GREEN}4. 停止nginx
+      $FUCHSIA=======================================================
+      ${GREEN}5. 重启nginx           ${GREEN}6. 查询证书有效期剩余天数
+      $FUCHSIA=======================================================
+      ${GREEN}7. 更新证书有效期       ${GREEN}8. 更新v2ray core
+      $FUCHSIA=======================================================
+      ${GREEN}9. 修改v2ray端口号（端口被墙修改该端口即可）
+      $FUCHSIA=======================================================
+      ${GREEN}0. 啥也不做，退出
+      $FUCHSIA=======================================================${NO_COLOR}"
+      read -rp "请输入您要执行的操作的数字:" aNum
+      case $aNum in
+          1)systemctl stop v2ray
+            echo -e  "${GREEN}v2ray服务停止${NO_COLOR}"
+          ;;
+          2)systemctl restart v2ray
+            echo -e  "${GREEN}v2ray服务启动${NO_COLOR}"
+          ;;
+          3)webserver=v2ray
+            change_vless_uuid
+          ;;
+          4)systemctl stop nginx
+            echo -e  "${GREEN}nginx服务停止${NO_COLOR}"
+          ;;
+          5)systemctl restart nginx
+            echo -e  "${GREEN}nginx服务启动${NO_COLOR}"
+          ;;
+          6)v2ray_count_days
+          ;;
+          7)echo -e "目前证书在 60 天以后会自动更新, 你无需任何操作. 今后有可能会缩短这个时间, 不过都是自动的, 你不用关心."
+          ;;
+          8)bash install-release.sh
+            bash install-dat-release.sh
+            systemctl restart v2ray
+          ;;
+          9)webserver=v2ray
+            change_v2ray_port
+          ;;
+          0) exit
+          ;;
+          *)echo -e "${RED}输入错误！！！${NO_COLOR}"
+            exit
+          ;;
+      esac
+  elif [[ -e "${caddy_bin_dir}" ]] && [[ -e "${v2ray_bin_dir}" ]] && [[ "`cat ${v2ray_conf}|grep -c vless`" != 0 ]]; then
+      echo -e "
+      $FUCHSIA=======================================================
+      ${GREEN}系统检测到您目前安装的是vless+caddy+tls一键脚本
+      $FUCHSIA=======================================================
+      ${GREEN}1. 停止v2ray            ${GREEN}2. 重启v2ray
+      $FUCHSIA=======================================================
+      ${GREEN}3. 修改UUID             ${GREEN}4. 停止caddy
+      $FUCHSIA=======================================================
+      ${GREEN}5. 重启caddy            ${GREEN}6. 查询证书有效期剩余天数
+      $FUCHSIA=======================================================
+      ${GREEN}7. 更新证书有效期        ${GREEN}8. 更新v2ray core
+      $FUCHSIA=======================================================
+      ${GREEN}9. 修改v2ray端口号（端口被墙修改该端口即可）
+      $FUCHSIA=======================================================
+      ${GREEN}0. 啥也不做，退出
+      $FUCHSIA=======================================================${NO_COLOR}"
+      read -rp "请输入您要执行的操作的数字:" aNum
+      case $aNum in
+          1)systemctl stop v2ray
+            echo -e  "${GREEN}v2ray服务停止${NO_COLOR}"
+          ;;
+          2)systemctl restart v2ray
+            echo -e  "${GREEN}v2ray服务启动${NO_COLOR}"
+          ;;
+          3)webserver=v2ray
+            change_vless_uuid
+          ;;
+          4)systemctl stop caddy.service
+            echo -e  "${GREEN}caddy服务停止${NO_COLOR}"
+          ;;
+          5)systemctl restart caddy.service
+            echo -e  "${GREEN}caddy服务启动${NO_COLOR}"
+          ;;
+          6)v2ray_count_days
+          ;;
+          7)echo -e "目前证书在 60 天以后会自动更新, 你无需任何操作. 今后有可能会缩短这个时间, 不过都是自动的, 你不用关心."
+          ;;
+          8)bash install-release.sh
+            bash install-dat-release.sh
+            systemctl restart v2ray
+          ;;
+          9)webserver=v2ray
+            change_v2ray_port
+          ;;
+          0) exit
+          ;;
+          *)echo -e "${RED}输入错误！！！${NO_COLOR}"
+            exit
+          ;;
+      esac
   elif [[ -e "${caddy_bin_dir}" ]] && [[ -d "${ssr_bin_dir}" ]]; then
       echo -e "
       $FUCHSIA===================================================
