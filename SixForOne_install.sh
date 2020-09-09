@@ -1004,13 +1004,6 @@ trojan_conf() {
   done
   touch ${trojan_conf}
   cat >${trojan_conf} <<_EOF
-
-  # sed -i "8c \"$password1\"," ${trojan_conf}
-  # sed -i "9c \"$password2\"," ${trojan_conf}
-  # sed -i "s/password1/${password1}/g" ${trojan_conf}
-  # sed -i "s/password2/${password2}/g" ${trojan_conf}
-  # sed -i "/\"cert\":/c \"cert\": \"/etc/letsencrypt/live/$domain/fullchain.pem\"," ${trojan_conf}
-  # sed -i "/\"key\":/c \"key\": \"/etc/letsencrypt/live/$domain/privkey.pem\"," ${trojan_conf}
   {
     "run_type": "server",
     "local_addr": "0.0.0.0",
