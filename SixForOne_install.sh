@@ -296,14 +296,12 @@ install_v2ray() {
       echo -e "${Info}开始安装v2ray……"
       sleep 2
       #bash <(curl -L -s https://install.direct/go.sh)
-      curl -O https://raw.githubusercontent.com/v2fly/fhs-install-v2ray/master/install-release.sh
-    sucess_or_fail "v2ray包安装下载"
-    curl -O https://raw.githubusercontent.com/v2fly/fhs-install-v2ray/master/install-dat-release.sh
-    sucess_or_fail "v2ray数据包下载"
-    bash install-release.sh
-    sucess_or_fail "v2ray安装"
-    bash install-dat-release.sh
-    sucess_or_fail "v2ray数据包安装"
+      #curl -O https://raw.githubusercontent.com/v2fly/fhs-install-v2ray/master/install-release.sh
+      bash <(curl -L https://raw.githubusercontent.com/v2fly/fhs-install-v2ray/master/install-release.sh)
+    sucess_or_fail "安裝和更新 V2Ray"
+    #curl -O https://raw.githubusercontent.com/v2fly/fhs-install-v2ray/master/install-dat-release.sh
+    bash <(curl -L https://raw.githubusercontent.com/v2fly/fhs-install-v2ray/master/install-dat-release.sh)
+    sucess_or_fail "安裝最新發行的 geoip.dat 和 geosite.dat"
       ;;
     *) ;;
 
