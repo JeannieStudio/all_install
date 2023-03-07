@@ -248,6 +248,7 @@ tls_generate() {
     fi
     
     "$HOME"/.acme.sh/acme.sh --set-default-ca --server letsencrypt;
+    echo -e "${Info} 设置默认签发服务器为letsencrypt"
 
     if "$HOME"/.acme.sh/acme.sh --issue -d "${domain}" --standalone -k ec-256 --force; then
         echo -e "${Info} TLS 证书生成成功 "
